@@ -1,0 +1,16 @@
+{
+  "appId": "com.zhangti112358.talktocomputer",
+  "files": ["dist-electron", "dist-react"],
+  "extraResources": ["dist-electron/preload.cjs", "src/assets/**"],
+  "icon": "data/icon_panda.ico",
+  "mac": {
+    "target": "dmg"
+  },
+  "linux": {
+    "target": "AppImage",
+    "category": "Utility"
+  },
+  "win": {
+    "target": ["portable"]
+  }
+}

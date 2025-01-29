@@ -1,7 +1,7 @@
 import {app, BrowserWindow, ipcMain} from 'electron';
 import path from 'path';
-import { ipcMainHandle, isDev } from './util.js'
-import { getPreloadPath } from './pathResolver.js';
+import { ipcMainHandle, isDev, portDev } from './util.js'
+import { getPreloadPath, getUIPath } from './pathResolver.js';
 import { pollResources, getStaticData } from './resourceManager.js';
 import { get } from 'http';
 
@@ -17,10 +17,11 @@ app.on('ready', () => {
   if (isDev()){
     // 区分开发过程，实时加载代码修改
     // electron 启动界面，内容从端口读取 内容由React实时创建
-    mainWindow.loadURL('http://localhost:12306'); // 对应vite.config.ts文件的端口
+    mainWindow.loadURL(`http://localhost:${portDev()}`);
   }
   else {
-    mainWindow.loadFile(path.join(app.getAppPath(), 'dist-react', 'index.html'));
+    // 加载UI 一个html页面
+    mainWindow.loadFile(getUIPath());
   }
 
   pollResources(mainWindow);

@@ -6,13 +6,17 @@ function App() {
   const [count, setCount] = useState(0)
 
   useEffect(() => {
-    window.electron.subscribeStatistics((stats) => console.log(stats));
+    const unsub = window.electron.subscribeStatistics((stats) => console.log(stats));
+    return unsub;
   }, []
   );
 
   return (
     <>
       <div>
+        abcd <br/>
+        abcd <br/>
+        www.cn.bing.com <br/>
         <a href="https://react.dev" target="_blank">
           <img src={reactLogo} className="logo react" alt="React logo" />
         </a>

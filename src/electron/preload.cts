@@ -2,13 +2,13 @@ const electron = require('electron');
 
 electron.contextBridge.exposeInMainWorld('electron', {
   // 这些可以被UI使用
-  subscribeStatistics: (callback) => {
-    electron.ipcRenderer.on("statistics", (_:any, stats:any) => {
-      callback(stats)
-    })
-  },
-  getStaticData: () => electron.ipcRenderer.invoke('getStaticData'),
-} satisfies Window['electron']);
+  subscribeStatistics: (callback) =>
+    ipcOn('statistics', (stats) => {
+      callback(stats);
+    }),
+  getStaticData: () => ipcInvoke('getStaticData'),
+} satisfies Window['electron']
+);
 
 
 function ipcInvoke<Key extends keyof EventPayloadMapping>(
@@ -17,6 +17,7 @@ function ipcInvoke<Key extends keyof EventPayloadMapping>(
   return electron.ipcRenderer.invoke(key);
 }
 
+// ipc on 返回取消订阅函数
 function ipcOn<Key extends keyof EventPayloadMapping>(
   key: Key,
   callback: (payload: EventPayloadMapping[Key]) => void

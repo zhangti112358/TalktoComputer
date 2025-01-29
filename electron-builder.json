@@ -4,7 +4,8 @@
   "extraResources": ["dist-electron/preload.cjs", "src/assets/**"],
   "icon": "data/icon_panda.ico",
   "mac": {
-    "target": "dmg"
+    "target": "dmg",
+    "icon": "data/icon_panda_rc.png"
   },
   "linux": {
     "target": "AppImage",

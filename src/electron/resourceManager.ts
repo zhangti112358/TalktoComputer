@@ -7,6 +7,7 @@ import { ipcWebContentsSend } from './util.js';
 const POLLING_INTERVAL = 500;
 
 export function pollResources(mainWindow: BrowserWindow) {
+  // setInterval 功能是每隔一段时间执行一次函数
   setInterval(async () => {
     const cpuUsage = await getCpuUsage();
     const ramUsage = getRamUsage();

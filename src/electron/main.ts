@@ -5,6 +5,10 @@ import { getPreloadPath, getUIPath } from './pathResolver.js';
 import { pollResources, getStaticData } from './resourceManager.js';
 import { get } from 'http';
 
+import { systemPreferences } from 'electron';
+
+const hasMicrophonePermission = systemPreferences.getMediaAccessStatus('microphone') === 'granted';
+
 type test = string;
 
 app.on('ready', () => {
@@ -13,6 +17,8 @@ app.on('ready', () => {
       preload: getPreloadPath(),
     }
   });
+
+  console.log('hasMicrophonePermission', hasMicrophonePermission);
 
   if (isDev()){
     // 区分开发过程，实时加载代码修改

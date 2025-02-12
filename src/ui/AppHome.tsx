@@ -1,7 +1,7 @@
 import { AppSidebar } from "@/components/app-home-sidebar"
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 
-import { NAV_HEIGHT, MAIN_PADDING } from './AppCommon.tsx';
+import { NAV_HEIGHT, MAIN_PADDING } from './Common.tsx';
 
 
 function Layout({ children }: { children: React.ReactNode }) {

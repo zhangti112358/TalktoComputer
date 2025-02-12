@@ -40,3 +40,14 @@
 .read-the-docs {
   color: #888;
 }
+
+/* 隐藏 WebKit 浏览器的滚动条 */
+::-webkit-scrollbar {
+  display: none;
+}
+
+/* 为所有元素应用 */
+* {
+  -ms-overflow-style: none;  /* IE 和 Edge */
+  scrollbar-width: none;  /* Firefox */
+}

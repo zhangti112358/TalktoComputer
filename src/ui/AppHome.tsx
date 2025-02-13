@@ -1,7 +1,7 @@
 import { AppSidebar } from "@/components/app-home-sidebar"
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 
-import { NAV_HEIGHT, MAIN_PADDING } from './Common.tsx';
+import { NAV_HEIGHT } from './Common.tsx';
 
 
 function Layout({ children }: { children: React.ReactNode }) {
@@ -10,7 +10,6 @@ function Layout({ children }: { children: React.ReactNode }) {
       <AppSidebar 
       style={{ 
         height: `calc(100vh - ${NAV_HEIGHT})`,
-        paddingBottom: MAIN_PADDING 
       }}
       />
       <main>

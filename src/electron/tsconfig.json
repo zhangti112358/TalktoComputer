@@ -11,6 +11,8 @@
       // ignore errors from dependencies
       "skipLibCheck": true,
       // add global types
-      "types": ["../../types"]
+      "types": ["../../types"],
+      // 
+      "sourceMap": true,
     }
   }

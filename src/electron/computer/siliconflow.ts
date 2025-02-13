@@ -219,6 +219,7 @@ fetch('https://api.siliconflow.cn/v1/user/info', options)
 */
 
 import fs from 'fs';
+import url from 'url';
 import path from 'path';
 
 const sleep = (ms: number): Promise<void> => {
@@ -257,7 +258,7 @@ async function saveMp3FromStream(response: Response, filePath: string) {
 }
 
 // api调用类
-class SiliconFlow {
+export class SiliconFlow {
     private apiUrl: string = 'https://api.siliconflow.cn/v1';
     private apiKey: string;
     constructor(apiKey: string) {
@@ -313,7 +314,7 @@ class SiliconFlow {
     }
 
     // 文本转向量
-    async embedding(text: string) {
+    async embedding(text: string): Promise<number[]> {
         try {
             const body = {
                 model: 'BAAI/bge-large-zh-v1.5',
@@ -335,7 +336,7 @@ class SiliconFlow {
             }
             
             const response_json = await response.json();
-            console.log(response_json);
+            // console.log(response_json);
             return response_json['data'][0]['embedding'];
         }
         catch (error) {
@@ -421,7 +422,7 @@ class SiliconFlow {
 }
 
 
-function SiliconFlowKeyDefault(): string {
+export function SiliconFlowKeyDefault(): string {
     /*
     从json中读取key
     './user_root/key.json'
@@ -437,7 +438,7 @@ function SiliconFlowKeyDefault(): string {
 }
 
 // 测试类
-class SiliconFlowTest {
+export class SiliconFlowTest {
     private siliconflow: SiliconFlow;
     constructor(key: string) {
         this.siliconflow = new SiliconFlow(key);
@@ -482,7 +483,6 @@ async function main() {
     await test.test();
 }
 
-main();
-
-
-export { SiliconFlow, SiliconFlowTest, SiliconFlowKeyDefault };
+if (import.meta.url === url.pathToFileURL(process.argv[1]).href) {
+    main();
+}

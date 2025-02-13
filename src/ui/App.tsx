@@ -1,35 +1,15 @@
 import { useEffect, useState } from 'react'
 import './App.css'
 import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Home, Command, MessageSquare } from "lucide-react"; // 图标库
 
-import { BACKGROUND_IMG, NAV_HEIGHT, MAIN_PADDING } from './Common.tsx';
+import { BACKGROUND_IMG, NAV_HEIGHT } from './Common.tsx';
 
 // apps
 import { AppHome } from "./AppHome.tsx";
 import { AppShortcut } from "./AppShortcut.tsx";
 import { AppChat } from "./AppChat.tsx";
-import { AppSidebar } from "@/components/app-home-sidebar"
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 
-
-function Layout({ children }: { children: React.ReactNode }) {
-  return (
-    <SidebarProvider>
-      <AppSidebar 
-      style={{ 
-        height: `calc(100vh - ${NAV_HEIGHT})`,
-        paddingBottom: MAIN_PADDING 
-      }}
-      />
-      <main>
-        <SidebarTrigger />
-        {children}
-      </main>
-    </SidebarProvider>
-  )
-}
 
 export function App() {
   const [activeApp, setActiveApp] = useState<string | null>(null);
@@ -49,7 +29,6 @@ return (
       className="fixed top-0 left-0 right-0 overflow-auto px-6" 
       style={{ 
         height: `calc(100vh - ${NAV_HEIGHT})`,
-        paddingBottom: MAIN_PADDING 
       }}
     >
       {activeApp === "app1" && (

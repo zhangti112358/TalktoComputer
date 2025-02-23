@@ -7,14 +7,23 @@ electron.contextBridge.exposeInMainWorld('electron', {
       callback(stats);
     }),
   getStaticData: () => ipcInvoke('getStaticData'),
+  sendAudioData: (audioData) => ipcInvoke('sendAudio', audioData),
+  
+  // ipc
+  ipcRenderer: {
+    on: (channel, func) => electron.ipcRenderer.on(channel, func),
+    once: (channel, func) => electron.ipcRenderer.once(channel, func),
+    removeListener: (channel, func) => electron.ipcRenderer.removeListener(channel, func),
+  },
 } satisfies Window['electron']
 );
 
 
 function ipcInvoke<Key extends keyof EventPayloadMapping>(
-  key: Key
+  key: Key,
+  data?: any  // 添加可选参数
 ): Promise<EventPayloadMapping[Key]> {
-  return electron.ipcRenderer.invoke(key);
+  return electron.ipcRenderer.invoke(key, data);
 }
 
 // ipc on 返回取消订阅函数

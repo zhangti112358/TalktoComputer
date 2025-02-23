@@ -11,7 +11,7 @@ import { AppShortcut } from "./AppShortcut.tsx";
 import { AppChat } from "./AppChat.tsx";
 
 
-export function App() {
+export function App1() {
   const [activeApp, setActiveApp] = useState<string | null>(null);
 
   // App 数据
@@ -95,3 +95,10 @@ return (
 );
 }
 
+
+import { AudioRecorderComponent } from './media.tsx';
+export function App(){
+  // return App1();
+
+  return <AudioRecorderComponent />
+}

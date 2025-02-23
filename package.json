@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "npm-run-all --parallel dev:react dev:electron",
     "dev:react": "vite",
-    "dev:electron": "npm run transpile:electron && cross-env NODE_ENV=development electron .",
+    "dev:electron": "npm run transpile:electron && chcp 65001 && cross-env NODE_ENV=development electron .",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
@@ -33,12 +33,14 @@
     "lucide-react": "^0.474.0",
     "mathjs": "^14.2.1",
     "next-themes": "^0.4.4",
+    "node-global-key-listener": "^0.3.0",
     "os-utils": "^0.0.14",
     "react": "^18.3.1",
     "react-day-picker": "^8.10.1",
     "react-dom": "^18.3.1",
     "tailwind-merge": "^2.6.0",
     "tailwindcss-animate": "^1.0.7",
+    "webm-to-wav-converter": "^1.1.0",
     "zustand": "^5.0.3"
   },
   "devDependencies": {

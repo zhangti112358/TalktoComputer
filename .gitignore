@@ -28,3 +28,5 @@ dist-ssr
 # local files
 old
 user_dir
+*.wav
+*.mp3

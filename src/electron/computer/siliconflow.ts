@@ -377,8 +377,8 @@ export class SiliconFlow {
         }
     }
 
-    // 语音转文本 输入文件路径
-    async speechToTextFile(audioFile: string) {
+    // 语音转文本 输入文件路径 mp3格式
+    async speechFileToText(audioFile: string) {
         try {
             const fileData = await fs.promises.readFile(audioFile);
             const audioBlob = new Blob([fileData], { type: 'audio/mpeg' });
@@ -397,7 +397,7 @@ export class SiliconFlow {
             const options = {
                 method: 'POST',
                 headers: {
-                    Authorization: 'Bearer sk-vbnztclbblebalqjovzrnbliyskahgexdzumzkymukuadqqz',
+                    Authorization: `Bearer ${this.apiKey}`,
                     // 'Content-Type': 'multipart/form-data' // 这里不能设置Content-Type，否则会报错
                     // body是FormData时，header自动设置
                 },
@@ -419,6 +419,49 @@ export class SiliconFlow {
             throw error;
         }
     }
+
+    // 语音转文本 输入音频数据 wav格式
+    async speechWavToText(audioData: Buffer) {
+        try {
+            const audioBlob = new Blob([audioData], { type: 'audio/wav' });
+            const file = new File(
+                [audioBlob], 
+                "hello.wav",
+                { 
+                    type: "audio/wav",
+                }
+            );
+            
+            const form = new FormData();
+            form.append("file", file);
+            form.append("model", "FunAudioLLM/SenseVoiceSmall");
+
+            const options = {
+                method: 'POST',
+                headers: {
+                    Authorization: `Bearer ${this.apiKey}`,
+                    // 'Content-Type': 'multipart/form-data' // 这里不能设置Content-Type，否则会报错
+                    // body是FormData时，header自动设置
+                },
+                body: form
+            };
+
+            
+            const response = await fetch('https://api.siliconflow.cn/v1/audio/transcriptions', options);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const response_json = await response.json();
+            // console.log(response_json);
+            return response_json['text'];
+        }
+        catch (error) {
+            console.error(error);
+            throw error;
+        }
+    }
+
 }
 
 
@@ -459,7 +502,15 @@ export class SiliconFlowTest {
         await this.siliconflow.textToSpeechFile(text_in, audioFile);
 
         // 语音转文本 把上面生成的音频文件作为输入
-        const text_out = await this.siliconflow.speechToTextFile(audioFile);
+        const text_out = await this.siliconflow.speechFileToText(audioFile);
+        console.log(text_out);
+    }
+
+    async testWav2Text() {
+        // 语音转文本 把上面生成的音频文件作为输入
+        const audioFile = './audio.wav';
+        const fileData = await fs.promises.readFile(audioFile);
+        const text_out = await this.siliconflow.speechWavToText(fileData);
         console.log(text_out);
     }
 
@@ -480,7 +531,8 @@ async function main() {
     // 测试
     const test = new SiliconFlowTest(key);
     // await test.testBasic();
-    await test.test();
+    // await test.test();
+    await test.testWav2Text();
 }
 
 if (import.meta.url === url.pathToFileURL(process.argv[1]).href) {

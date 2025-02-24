@@ -378,7 +378,7 @@ export class SiliconFlow {
     }
 
     // 语音转文本 输入文件路径 mp3格式
-    async speechFileToText(audioFile: string) {
+    async speechMp3ToText(audioFile: string) {
         try {
             const fileData = await fs.promises.readFile(audioFile);
             const audioBlob = new Blob([fileData], { type: 'audio/mpeg' });
@@ -502,12 +502,12 @@ export class SiliconFlowTest {
         await this.siliconflow.textToSpeechFile(text_in, audioFile);
 
         // 语音转文本 把上面生成的音频文件作为输入
-        const text_out = await this.siliconflow.speechFileToText(audioFile);
+        const text_out = await this.siliconflow.speechMp3ToText(audioFile);
         console.log(text_out);
     }
 
     async testWav2Text() {
-        // 语音转文本 把上面生成的音频文件作为输入
+        // 语音转文本
         const audioFile = './audio.wav';
         const fileData = await fs.promises.readFile(audioFile);
         const text_out = await this.siliconflow.speechWavToText(fileData);

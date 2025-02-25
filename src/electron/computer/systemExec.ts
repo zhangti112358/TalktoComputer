@@ -17,9 +17,22 @@ export function executeCommand(command: string): Promise<string> {
 // 执行系统命令 操作其他软件
 export class SystemExec {
 
+  url2cmd(url:string) {
+    let cmd = '';
+    if (process.platform === 'win32') {
+      cmd = `start chrome ${url}`;
+    } else if (process.platform === 'darwin') {
+      cmd = `open ${url}`;
+    } else if (process.platform === 'linux') {
+      cmd = `xdg-open ${url}`;  // 自动生成 未测试
+    }
+    return cmd;
+  }
+
   // 打开网页
   async chromeUrl(url:string) {
-    return await executeCommand(`start chrome ${url}`);
+    const cmd = this.url2cmd(url);
+    return await executeCommand(cmd);
   }
 
   // 搜索
@@ -39,8 +52,21 @@ export class SystemExec {
 
 // Steam 操作
 export class SteamExec {
+  appId2cmd(appId:string) {
+    let cmd = '';
+    if (process.platform === 'win32') {
+      cmd = `start steam://rungameid/${appId}`;
+    } else if (process.platform === 'darwin') {
+      cmd = `open steam://rungameid/${appId}`;
+    } else if (process.platform === 'linux') {
+      cmd = `xdg-open steam://rungameid/${appId}`;  // 自动生成 未测试
+    }
+    return cmd;
+  }
+
   async runApp(appId:string) {
-    return await executeCommand(`start steam://rungameid/${appId}`);
+    const cmd = this.appId2cmd(appId);
+    return await executeCommand(cmd);
   }
 
   async runDota2(){
@@ -75,9 +101,9 @@ export class SteamExec {
 // 使用示例:
 async function main() {
   try {
-    // const systemExec = new SystemExec();
-    // await systemExec.chromeUrl('cn.bing.com');
-    // await systemExec.chromeBingSearch('苹果');
+    const systemExec = new SystemExec();
+    await systemExec.chromeUrl('https://cn.bing.com');
+    await systemExec.chromeBingSearch('苹果');
 
     const steamExec = new SteamExec();
     await steamExec.runPortal2();

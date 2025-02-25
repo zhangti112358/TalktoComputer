@@ -1,5 +1,6 @@
 import { app, BrowserWindow, globalShortcut, ipcMain, systemPreferences } from 'electron';
 import { GlobalKeyboardListener } from "node-global-key-listener";
+import { execSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 
@@ -62,6 +63,13 @@ async function saveTextToFile(text: string, filePath: string) {
       await fs.promises.writeFile(filePath, buffer);
 }
 
+// 程序启动前
+app.on('will-finish-launching', () => {
+  // 设置字符集为utf-8 避免乱码
+  if (process.platform === 'win32') {
+    execSync('chcp 65001');
+  }
+});
 
 app.on('ready', () => {
   const mainWindow = new BrowserWindow({

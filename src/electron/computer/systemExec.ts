@@ -48,6 +48,9 @@ export class SystemExec {
   async chromeBilibiliSearch(keyword:string) {
     return await this.chromeUrl(`https://search.bilibili.com/all?keyword=${keyword}`);
   }
+  async chromeXiaohongshuSearch(keyword:string) {
+    return await this.chromeUrl(`https://www.xiaohongshu.com/search_result/?keyword=${keyword}`);
+  }
 }
 
 // Steam 操作
@@ -102,11 +105,12 @@ export class SteamExec {
 async function main() {
   try {
     const systemExec = new SystemExec();
-    await systemExec.chromeUrl('https://cn.bing.com');
-    await systemExec.chromeBingSearch('苹果');
+    // await systemExec.chromeUrl('https://cn.bing.com');
+    // await systemExec.chromeBingSearch('苹果');
+    await systemExec.chromeXiaohongshuSearch('云南有什么好玩的');
 
-    const steamExec = new SteamExec();
-    await steamExec.runPortal2();
+    // const steamExec = new SteamExec();
+    // await steamExec.runPortal2();
 
     // Windows 示例
     // const result = await executeCommand('dir');

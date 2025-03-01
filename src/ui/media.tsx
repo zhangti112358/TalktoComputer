@@ -2,9 +2,67 @@ import { Buffer } from 'buffer';
 import { getWaveBlob, WavRecorder } from "webm-to-wav-converter";
 import { useState, useEffect, useRef } from "react";
 
-import { WAV_SAMPLE_RATE } from '@/electron/define.ts';
+import { WAV_SAMPLE_RATE, WAV_BITS_PER_SAMPLE, WAV_CHANNELS } from '@/electron/define.ts';
+
+// 音频处理工具类
+export class MediaUtils {
+  static async webm2wav(webmBlob: Blob, sampleRate: number, bitsPerSample: number, channels: number): Promise<Buffer> {
+    // webmBlob 转换为 wavBlob
+    let f32_flag = true;
+    if (bitsPerSample == 16){
+      f32_flag = false;
+    }
+    const audioBlob = await getWaveBlob(webmBlob, f32_flag, { sampleRate: sampleRate });
+    
+    // 获取buffer
+    const arrayBuffer = await audioBlob.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);  // 注意：在渲染进程中，Buffer.from 实际上返回的是 Uint8Array
+
+    // 添加 WAV 文件头，转换成 WAV 格式
+    const wavBuffer = MediaUtils.audioBuffer2WavBuffer(buffer, sampleRate, bitsPerSample, channels);
+
+    return wavBuffer;
+  }
+
+  // 创建 WAV 文件头
+  static createWavHeader(sampleRate: number, bitsPerSample: number, channels: number, dataLength: number): Buffer {
+    const buffer = Buffer.alloc(44);
+
+    // RIFF chunk descriptor
+    buffer.write('RIFF', 0);
+    buffer.writeUInt32LE(36 + dataLength, 4);  // 文件大小
+    buffer.write('WAVE', 8);
+
+    // fmt sub-chunk
+    buffer.write('fmt ', 12);
+    buffer.writeUInt32LE(16, 16);  // fmt chunk size
+    buffer.writeUInt16LE(1, 20);   // audio format (PCM)
+    buffer.writeUInt16LE(channels, 22);  // 声道数
+    buffer.writeUInt32LE(sampleRate, 24);  // 采样率
+    buffer.writeUInt32LE((sampleRate * channels * bitsPerSample) / 8, 28);  // byte rate
+    buffer.writeUInt16LE((channels * bitsPerSample) / 8, 32);  // block align
+    buffer.writeUInt16LE(bitsPerSample, 34);  // bits per sample
+
+    // data sub-chunk
+    buffer.write('data', 36);
+    buffer.writeUInt32LE(dataLength, 40);
+
+    return buffer;
+  }
+
+  // 给音频数据添加 WAV 文件头，转换成 WAV 格式
+  static audioBuffer2WavBuffer(audioBuffer: Buffer, sampleRate: number, bitsPerSample: number, channels: number): Buffer {
+    // 创建 WAV 文件头
+    const header = MediaUtils.createWavHeader(sampleRate, bitsPerSample, channels, audioBuffer.length);
+
+    // 合并文件头和音频数据
+    const wavBuffer = Buffer.concat([header, audioBuffer]);
+    return wavBuffer;
+  }
+}
 
 
+// 音频录制
 export class AudioRecorder {
   private mediaRecorder: MediaRecorder | null = null;
   private audioChunks: Blob[] = [];
@@ -30,35 +88,6 @@ export class AudioRecorder {
     }
   }
 
-  // async stopRecording(): Promise<string> {
-  //   if (!this.mediaRecorder || !this.isRecording) {
-  //     return '';
-  //   }
-  //   this.mediaRecorder.stop();
-
-  //   this.isRecording = false;
-  //   const audioBlobWebm = new Blob(this.audioChunks, { type: "audio/webm" });
-
-  //   // 把webm转换成wav
-  //   console.log('音频大小:', this.audioChunks.length, '个块');
-  //   const audioBlob = await getWaveBlob(audioBlobWebm, false, { sampleRate: WAV_SAMPLE_RATE });
-  //   console.log('audioBlob', audioBlob);
-  //   console.log('time', new Date().getTime());
-    
-  //   // 传输给后端
-  //   // 将 Blob 转换为 ArrayBuffer，再转为 Buffer
-  //   const arrayBuffer = await audioBlob.arrayBuffer();
-  //   // 注意：在渲染进程中，Buffer.from 实际上返回的是 Uint8Array
-  //   const buffer = Buffer.from(arrayBuffer);
-      
-  //   // // 传输给后端
-  //   console.log('音频大小:', buffer.length, '字节');
-  //   const result = await window.electron.sendAudioData(buffer);
-  //   console.log('音频传输结果:', result);
-
-  //   const audioUrl = URL.createObjectURL(audioBlobWebm);
-  //   return audioUrl;
-  // }
   async stopRecording(): Promise<string> {
     
     return new Promise((resolve) => {
@@ -71,19 +100,11 @@ export class AudioRecorder {
         this.isRecording = false;
         const audioBlobWebm = new Blob(this.audioChunks, { type: "audio/webm" });
 
-        // 把webm转换成wav
-        console.log('音频大小:', this.audioChunks.length, '个块');
-        const audioBlob = await getWaveBlob(audioBlobWebm, false, { sampleRate: WAV_SAMPLE_RATE });
-        
-        // 传输给后端
-        // 将 Blob 转换为 ArrayBuffer，再转为 Buffer
-        const arrayBuffer = await audioBlob.arrayBuffer();
-        // 注意：在渲染进程中，Buffer.from 实际上返回的是 Uint8Array
-        const buffer = Buffer.from(arrayBuffer);
+        const wavBuffer = await MediaUtils.webm2wav(audioBlobWebm, WAV_SAMPLE_RATE, WAV_BITS_PER_SAMPLE, WAV_CHANNELS);
           
-        // // 传输给后端
-        console.log('音频大小:', buffer.length, '字节');
-        const result = await window.electron.sendAudioData(buffer);
+        // 传输给后端
+        console.log('音频大小:', wavBuffer.length, '字节');
+        const result = await window.electron.sendAudioData(wavBuffer);
         console.log('音频传输结果:', result);
 
 

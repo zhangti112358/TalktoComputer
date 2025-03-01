@@ -4,6 +4,7 @@
 import url from 'url';
 import * as math from 'mathjs';
 import { SiliconFlow, SiliconFlowKeyDefault } from './siliconflow.js';
+import exp from 'constants';
 
 export class SentenceSimilarity {
   private siliconFlow: SiliconFlow;
@@ -47,6 +48,11 @@ export class SentenceSimilarity {
     let similarityMatrix = await this.embdSimilarity(embd1, this.textEmbd);
     return similarityMatrix;
   }
+}
+
+// 理解需求和执行
+export class ContextReasoner {
+  
 }
 
 async function main() {

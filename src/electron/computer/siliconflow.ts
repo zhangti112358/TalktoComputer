@@ -530,9 +530,9 @@ async function main() {
 
   // 测试
   const test = new SiliconFlowTest(key);
-  // await test.testBasic();
+  await test.testBasic();
   // await test.test();
-  await test.testWav2Text();
+  // await test.testWav2Text();
 }
 
 if (import.meta.url === url.pathToFileURL(process.argv[1]).href) {

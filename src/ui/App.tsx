@@ -97,8 +97,13 @@ return (
 
 
 import { AudioRecorderComponent } from './media.tsx';
+import { Component } from '@/components/table-1.tsx';
+import { DataTableDemo } from '@/components/table-2.tsx';
 export function App(){
   // return App1();
 
-  return <AudioRecorderComponent />
+  // 测试
+  return <DataTableDemo />
+  return <Component />
+  // return <AudioRecorderComponent />
 }

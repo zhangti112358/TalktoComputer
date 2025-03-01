@@ -36,14 +36,6 @@ import {
   TableRow,
 } from "@/components/ui/table"
 
-// 快捷指令参数
-export type shortcutParam = {
-  id: number;
-  name: string;
-  cmd: string;
-}
-
-
 const data: Payment[] = [
   {
     id: "m5gr84i9",
@@ -318,13 +310,3 @@ export function DataTableDemo() {
     </div>
   )
 }
-
-
-export function AppShortcut() {
-    return (
-      <div>
-        <h2 className="text-lg font-semibold">Shortcut</h2>
-        <p>这里是 Shortcut 窗口的内容</p>
-      </div>
-    );
-  }

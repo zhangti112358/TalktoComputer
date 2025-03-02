@@ -9,6 +9,7 @@ import { getPreloadPath, getUIPath } from './pathResolver.js';
 import { pollResources, getStaticData } from './resourceManager.js';
 import { im } from 'mathjs';
 import { SiliconFlow, SiliconFlowKeyDefault } from './computer/siliconflow.js';
+import { ContextReasoner } from './computer/reasoner.js';
 
 import { VOICE_INPUT_SHORTCUT } from './define.js';
 
@@ -24,7 +25,7 @@ async function saveTextToFile(text: string, filePath: string) {
       await fs.promises.writeFile(filePath, buffer);
 }
 
-app.on('ready', () => {
+app.on('ready', async () =>  {
   const mainWindow = new BrowserWindow({
     webPreferences: {
       preload: getPreloadPath(),
@@ -74,6 +75,9 @@ app.on('ready', () => {
     }
   });
 
+  const reasoner = new ContextReasoner();
+  await reasoner.init();
+
   // ipcMainHandle('sendAudio', (audioData) => {
   //   return getStaticData();
   // });
@@ -89,6 +93,9 @@ app.on('ready', () => {
       // 语音识别
       const result = await siliconflow.speechWavToText(audioData);
       console.log('result', result);
+
+      // 判断需求并执行
+      await reasoner.reason(result);
 
       return { success: true };
     } catch(err: any) {

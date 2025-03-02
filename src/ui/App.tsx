@@ -103,7 +103,7 @@ export function App(){
   // return App1();
 
   // 测试
-  return <DataTableDemo />
-  return <Component />
-  // return <AudioRecorderComponent />
+  // return <DataTableDemo />
+  // return <Component />
+  return <AudioRecorderComponent />
 }

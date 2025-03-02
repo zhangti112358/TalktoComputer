@@ -218,9 +218,9 @@ fetch('https://api.siliconflow.cn/v1/user/info', options)
 }
 */
 
-import fs from 'fs';
-import url from 'url';
-import path from 'path';
+import * as fs from 'fs';
+import * as url from 'url';
+import * as path from 'path';
 
 const sleep = (ms: number): Promise<void> => {
   return new Promise(resolve => setTimeout(resolve, ms));

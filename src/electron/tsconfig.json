@@ -14,5 +14,7 @@
       "types": ["../../types"],
       // 
       "sourceMap": true,
+      // 将错误转为警告
+      "noUnusedLocals": false,
     }
   }

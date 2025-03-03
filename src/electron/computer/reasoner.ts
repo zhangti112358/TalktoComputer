@@ -4,8 +4,118 @@
 import * as url from 'url';
 import * as math from 'mathjs';
 import { exec, spawn } from 'child_process';
+import robot from 'robotjs';
+import { clipboard } from 'electron';
 
 import { SiliconFlow, SiliconFlowKeyDefault } from './siliconflow.js';
+
+// 模拟键盘操作
+class KerboardOperator {
+
+    /**
+     * 模拟键盘执行复制操作 (Ctrl+C)
+     * @returns Promise<boolean>
+     */
+    static async copy(): Promise<boolean> {
+      try {
+        robot.keyToggle('control', 'down');
+        robot.keyTap('c');
+        robot.keyToggle('control', 'up');
+        return true;
+      } catch (error) {
+        console.error('复制操作失败:', error);
+        return false;
+      }
+    }
+  
+    /**
+     * 模拟键盘执行粘贴操作 (Ctrl+V)
+     * @returns Promise<boolean>
+     */
+    static async paste(): Promise<boolean> {
+      try {
+        robot.keyToggle('control', 'down');
+        robot.keyTap('v');
+        robot.keyToggle('control', 'up');
+        return true;
+      } catch (error) {
+        console.error('粘贴操作失败:', error);
+        return false;
+      }
+    }
+  
+    /**
+     * 模拟键盘按下 Enter 键
+     * @returns Promise<boolean>
+     */
+    static async enter(): Promise<boolean> {
+      try {
+        robot.keyTap('enter');
+        return true;
+      } catch (error) {
+        console.error('Enter 键操作失败:', error);
+        return false;
+      }
+    }
+  
+    /**
+     * 模拟键盘输入文字
+     * @param text 要输入的文字
+     * @returns Promise<boolean>
+     */
+    static async type(text: string): Promise<boolean> {
+      try {
+        robot.typeString(text);
+        return true;
+      } catch (error) {
+        console.error('键盘输入失败:', error);
+        return false;
+      }
+    }
+  
+    /**
+     * 模拟按下单个键
+     * @param key 要按下的键
+     * @returns Promise<boolean>
+     */
+    static async pressKey(key: string): Promise<boolean> {
+      try {
+        robot.keyTap(key);
+        return true;
+      } catch (error) {
+        console.error(`按键 ${key} 操作失败:`, error);
+        return false;
+      }
+    }
+  
+    /**
+     * 模拟按下组合键
+     * @param key 主键
+     * @param modifiers 修饰键数组
+     * @returns Promise<boolean>
+     */
+    static async pressKeyWithModifiers(key: string, modifiers: string[]): Promise<boolean> {
+      try {
+        // 按下所有修饰键
+        for (const modifier of modifiers) {
+          robot.keyToggle(modifier, 'down');
+        }
+        
+        // 按下主键
+        robot.keyTap(key);
+        
+        // 释放所有修饰键
+        for (const modifier of modifiers) {
+          robot.keyToggle(modifier, 'up');
+        }
+        
+        return true;
+      } catch (error) {
+        console.error('组合键操作失败:', error);
+        return false;
+      }
+    }
+}
 
 // 使用 exec 执行命令
 export function executeCommand(command: string): Promise<string> {
@@ -19,7 +129,6 @@ export function executeCommand(command: string): Promise<string> {
     });
   });
 }
-
 
 export class SentenceSimilarity {
   private siliconFlow: SiliconFlow;
@@ -78,8 +187,6 @@ export class CommandOperator {
     return executeCommand(this.cmd);
   }
 }
-
-// 运行
 
 // 打开网页
 export class ChromeUrlOperator extends CommandOperator {
@@ -203,18 +310,24 @@ export class SteamAppOperator extends CommandOperator {
   }
 }
 
-class KerboardOperator {
+// 操作系统 文字操作
+class TextOprator {
   flagCopy: boolean = false;
   flagPaste: boolean = false;
   flagEnter: boolean = false;
 
-  // async copy() {
-  //   // 模拟键盘操作
-
-  // }
-
-  // async execute() {
-  //   // 模拟键盘操作
+  async execute(text: string) {
+    if (this.flagCopy){
+      clipboard.writeText(text);
+      if (this.flagPaste){
+        await KerboardOperator.paste();
+        if (this.flagEnter){
+          await KerboardOperator.enter();
+        }
+      }
+    }
+    return '';
+  }
 }
 
 // 理解需求和执行
@@ -228,6 +341,10 @@ export class ContextReasoner {
 
   // 搜索引擎
   opSearchList: ChromeSearchOperator[] = [];
+
+  // 对文字进行操作
+  textOperator: TextOprator = new TextOprator();
+
 
   async init(defaultSearchEngine: SearchEngine = SearchEngine.Bing, similarityThreshold: number = 0.6) {
     this.similarityThreshold = similarityThreshold;
@@ -268,6 +385,11 @@ export class ContextReasoner {
     defaultSearchOperator.name = '';
     defaultSearchOperator.nameWithSearch = '搜索';
     this.opSearchList.push(defaultSearchOperator);
+
+    // 文字操作
+    this.textOperator.flagCopy = true;
+    this.textOperator.flagPaste = true;
+    this.textOperator.flagEnter = true;
   }
 
   async opSimilarity(text: string) {
@@ -325,6 +447,8 @@ export class ContextReasoner {
     else {
       await this.opSimilarity(text);
     }
+
+    await this.textOperator.execute(text);
   }
 }
 

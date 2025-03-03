@@ -7,10 +7,26 @@
         {
             "type": "node",
             "request": "launch",
-            "name": "启动程序",
+            "name": "node",
             "skipFiles": [
                 "<node_internals>/**"
             ],
+            "program": "${file}",
+            "outFiles": [
+                "${workspaceFolder}/dist-electron/**/*.js"
+            ],
+            "preLaunchTask": "tsc: build - tsconfig.json",
+            "sourceMaps": true,
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Electron",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "runtimeExecutable": "electron",
             "program": "${file}",
             "outFiles": [
                 "${workspaceFolder}/dist-electron/**/*.js"

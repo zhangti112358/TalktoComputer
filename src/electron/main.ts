@@ -46,7 +46,7 @@ app.on('ready', async () =>  {
 
   // pollResources(mainWindow); // 资源监控（前后端交互示例）
 
-  // 用ipcHandle代替上面的代码 类型安全
+  // 用ipcHandle 类型安全
   ipcMainHandle('getStaticData', () => {
     return getStaticData();
   });

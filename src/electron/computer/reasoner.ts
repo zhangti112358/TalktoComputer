@@ -199,6 +199,7 @@ export class ChromeUrlOperator extends CommandOperator {
 
   static url2cmd(url:string) {
     let cmd = '';
+    url = `"${url}"`; // 需要加引号 来支持带空格的url
     if (process.platform === 'win32') {
       cmd = `start chrome ${url}`;
     } else if (process.platform === 'darwin') {
@@ -388,8 +389,8 @@ export class ContextReasoner {
 
     // 文字操作
     this.textOperator.flagCopy = true;
-    this.textOperator.flagPaste = true;
-    this.textOperator.flagEnter = true;
+    this.textOperator.flagPaste = false;
+    this.textOperator.flagEnter = false;
   }
 
   async opSimilarity(text: string) {
@@ -472,8 +473,4 @@ async function main() {
 
 if (import.meta.url === url.pathToFileURL(process.argv[1]).href) {
   main();
-}
-
-function runPortal2() {
-  throw new Error('Function not implemented.');
 }

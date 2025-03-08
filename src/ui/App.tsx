@@ -10,13 +10,16 @@ import { AppHome } from "./AppHome.tsx";
 import { AppShortcut } from "./AppShortcut.tsx";
 import { AppChat } from "./AppChat.tsx";
 
+// media
+import { AudioRecorderComponent } from './media.tsx';
 
-export function App1() {
+export function AppDefault() {
   const [activeApp, setActiveApp] = useState<string | null>(null);
 
   // App 数据
   const apps = [
-    { id: "app1", name: "Home", icon: <Home size={10} /> },
+    // { id: "app1", name: "Home", icon: <Home size={10} /> },
+    { id: "app1", name: "Home", icon: <img src="./data/icon_panda.ico" alt="Panda Icon" width={40} height={40} className="max-w-none" /> },
     { id: "app2", name: "Shortcut", icon: <Command size={10} /> },
     { id: "app3", name: "Chat", icon: <MessageSquare size={10} /> },
   ];
@@ -85,25 +88,21 @@ return (
             setActiveApp(app.id)
           }
           }}
-          className={activeApp === app.id ? 'ring-2 ring-white' : ''}
-        >
+          className={`${activeApp === app.id ? 'ring-2 ring-white' : ''} p-1`} // 添加内边距
+          >
           {app.icon}
         </Button>
       ))}
     </div>
+    <AudioRecorderComponent />
   </div>
 );
 }
 
 
-import { AudioRecorderComponent } from './media.tsx';
-import { Component } from '@/components/table-1.tsx';
-import { DataTableDemo } from '@/components/table-2.tsx';
 export function App(){
-  // return App1();
+  return AppDefault();
 
   // 测试
-  // return <DataTableDemo />
-  // return <Component />
-  return <AudioRecorderComponent />
+  // return <AudioRecorderComponent />
 }

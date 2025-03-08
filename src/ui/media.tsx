@@ -121,6 +121,8 @@ export class AudioRecorder {
     return this.isRecording;
   }
 }
+
+// 音频录制组件
 export const AudioRecorderComponent = () => {
   const [recording, setRecording] = useState(false);
   const [audioURL, setAudioURL] = useState<string | null>(null);
@@ -176,7 +178,9 @@ export const AudioRecorderComponent = () => {
     };
   }, [audioURL]);
 
-  return (
+  // 返回可视化录制音频的组件
+  function view() {
+    return (
     <div>
       <button onClick={recording ? stopRecording : startRecording}>
         {recording ? "停止录音" : "开始录音"}
@@ -192,7 +196,15 @@ export const AudioRecorderComponent = () => {
           </a>
         </div>
       )}
-    </div>
-  );
+    </div>);
+  }
+
+  // 只有录音组件 无视图
+  function noView() {
+    return <></>;
+  }
+
+  // return view();
+  return noView();
 
 };

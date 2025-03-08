@@ -315,6 +315,10 @@ export class SiliconFlow {
 
   // 文本转向量
   async embedding(text: string): Promise<number[]> {
+    // 空字符串抛出异常 注：空字符串siliconflow会返回错误400
+    if (text === '') {
+      throw new Error('embedding Empty text');
+    }
     try {
       const body = {
         model: 'BAAI/bge-large-zh-v1.5',
@@ -517,6 +521,7 @@ export class SiliconFlowTest {
   async test(){
     // 测试文本转向量
     const text = '你好。';
+    // const text = '';
     const embedding = await this.siliconflow.embedding(text);
     console.log(embedding);
   }
@@ -530,8 +535,8 @@ async function main() {
 
   // 测试
   const test = new SiliconFlowTest(key);
-  await test.testBasic();
-  // await test.test();
+  // await test.testBasic();
+  await test.test();
   // await test.testWav2Text();
 }
 

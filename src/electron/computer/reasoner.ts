@@ -442,6 +442,11 @@ export class ContextReasoner {
   }
 
   async reason(text: string) {
+    // 空字符串不处理
+    if (text === '') {
+      console.log('空字符串 不处理');
+      return;
+    }
     if (await this.isSearch(text)) {
       // isSearch 已经执行了搜索
     }

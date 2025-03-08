@@ -89,6 +89,7 @@ app.on('ready', async () =>  {
       // const audioPath ='./audio.wav';
       // await fs.promises.writeFile(audioPath, audioData);
       // console.log('audioPath', audioPath);
+      // console.log('audioData', audioData.length);
 
       // 语音识别
       const result = await siliconflow.speechWavToText(audioData);

@@ -7,6 +7,7 @@ import { exec, spawn } from 'child_process';
 import robot from 'robotjs';
 import { clipboard } from 'electron';
 
+import { FilePath, UserFileUtil } from '../define.js';
 import { SiliconFlow, SiliconFlowKeyDefault } from './siliconflow.js';
 
 // 模拟键盘操作
@@ -455,6 +456,47 @@ export class ContextReasoner {
     }
 
     await this.textOperator.execute(text);
+  }
+}
+
+export class ComputerExecutor {
+  flagInitSuccess: boolean = false;
+  reasoner: ContextReasoner;
+  constructor() {
+    this.reasoner = new ContextReasoner();
+  }
+
+  async initSiliconflowKey(key: string) {
+    UserFileUtil.writeSiliconflowKey(key);
+    this.init();
+  }
+
+  async init() {
+    // 读取key
+    let key = '';
+    try {
+      key = UserFileUtil.readSiliconflowKey();
+    }
+    catch (error) {
+      console.error('读取key失败:', error);
+      return;
+    }
+    let siliconFlow = new SiliconFlow(key);
+
+    // 推理单元初始化
+    await this.reasoner.init();
+
+    // 监听快捷键初始化
+
+    this.flagInitSuccess = true;
+  }
+
+  async executeAudio(audioData: Buffer) {
+    
+  }
+
+  async executeText(text: string) {
+    await this.reasoner.reason(text);
   }
 }
 

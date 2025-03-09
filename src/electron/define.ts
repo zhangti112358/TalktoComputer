@@ -1,5 +1,6 @@
 import * as os from 'os';
 import * as path from 'path';
+import fs from 'fs';
 
 // 程序名
 export const APP_NAME = 'TalktoComputer';
@@ -47,5 +48,47 @@ export class FilePath {
   // app
   static appDir(): string {
     return path.join(this.rootDir(), 'app');
+  }
+}
+
+// 用户文件操作
+export class UserFileUtil {
+  static isKeyFileExist(): boolean {
+    return fs.existsSync(FilePath.keyFile());
+  }
+
+  static writeSiliconflowKey(key:string){
+    // 如果文件存在 直接写入 如果不存在 创建文件
+    const filePath = FilePath.keyFile();
+    if (fs.existsSync(filePath)) {
+      // 读取json文件
+      const data = fs.readFileSync(filePath, 'utf-8');
+      const dataJson = JSON.parse(data);
+      dataJson.siliconflow.key = key;
+      fs.writeFileSync(filePath, JSON.stringify(dataJson, null, 2), 'utf-8');
+    }
+    else {
+      const dataJson = {
+        siliconflow: {
+          key: key
+        }
+      };
+      fs.writeFileSync(filePath, JSON.stringify(dataJson, null, 2), 'utf-8');
+    }
+  }
+
+  static readSiliconflowKey(): string {
+    let key: string = '';
+    const filePath = FilePath.keyFile();
+    if (fs.existsSync(filePath)) {
+      // 读取json文件
+      const data = fs.readFileSync(filePath, 'utf-8');
+      const dataJson = JSON.parse(data);
+      key = dataJson.siliconflow.key;
+    }
+    else {
+      throw new Error('key.json not exist');
+    }
+    return key;
   }
 }

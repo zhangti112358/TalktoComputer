@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import './App.css'
 import { Button } from "@/components/ui/button"
 import { Home, Command, MessageSquare } from "lucide-react"; // 图标库
 
 import { BACKGROUND_IMG, NAV_HEIGHT } from './Common.tsx';
+import { useGlobalState, GlobalStateProvider } from './globalState';
 
 // apps
 import { AppHome } from "./AppHome.tsx";
@@ -14,12 +15,13 @@ import { AppChat } from "./AppChat.tsx";
 import { AudioRecorderComponent } from './media.tsx';
 
 export function AppDefault() {
-  const [activeApp, setActiveApp] = useState<string | null>(null);
+  // 全局状态
+  const { activeApp, setActiveApp } = useGlobalState();
+  const { recording, setRecording } = useGlobalState();
 
   // App 数据
   const apps = [
-    // { id: "app1", name: "Home", icon: <Home size={10} /> },
-    { id: "app1", name: "Home", icon: <img src="./data/icon_panda.ico" alt="Panda Icon" width={40} height={40} className="max-w-none" /> },
+    { id: "app1", name: "Home", icon: <Home size={10} /> },
     { id: "app2", name: "Shortcut", icon: <Command size={10} /> },
     { id: "app3", name: "Chat", icon: <MessageSquare size={10} /> },
   ];
@@ -37,33 +39,33 @@ return (
       {activeApp === "app1" && (
           <AppHome></AppHome>
         )}
-        {activeApp === "app2" && (
-          <div>
-            <h2 className="text-lg font-semibold">App 2</h2>
-            <p>App 2 的内容</p>
+      {activeApp === "app2" && (
+        <div>
+          <h2 className="text-lg font-semibold">App 2</h2>
+          <p>App 2 的内容</p>
+        </div>
+      )}
+      {activeApp === null && (
+        <div className="fixed inset-0 w-screen h-screen overflow-hidden">
+          <div 
+            className='w-full h-full'
+            style={{
+              position: 'absolute',
+              top: 0,
+              bottom: NAV_HEIGHT,
+              left: 0,
+              right: 0,
+              backgroundImage: `url(${BACKGROUND_IMG})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              backgroundRepeat: 'no-repeat'
+            }}
+          >
           </div>
-        )}
-        {activeApp === null && (
-          <div className="fixed inset-0 w-screen h-screen overflow-hidden">
-            <div 
-              className='w-full h-full'
-              style={{
-                position: 'absolute',
-                top: 0,
-                bottom: NAV_HEIGHT,
-                left: 0,
-                right: 0,
-                backgroundImage: `url(${BACKGROUND_IMG})`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-                backgroundRepeat: 'no-repeat'
-              }}
-            >
-            </div>
-          </div>
-        )}
-        {/* 其他app的内容... */}
-      </main>
+        </div>
+      )}
+      {/* 其他app的内容... */}
+    </main>
 
     {/* 底部导航栏 */}
     <div 
@@ -75,7 +77,33 @@ return (
         WebkitBackdropFilter: 'blur(8px)',
       }}
     >
+      {/* appHome */}
+      <Button
+        key="app1"
+        variant="ghost"
+        size="icon"
+        onClick={() => {
+          if (activeApp === apps[0].id) {
+          setActiveApp(null)
+        }
+        else {
+          setActiveApp("app1")
+        }
+        }}
+        className={`${activeApp === "app1" ? 'ring-2 ring-white' : ''} p-1`} // 添加内边距
+        >
+        <img
+            src={recording === true ? "./data/panda_front.JPG" : "./data/panda_back.JPG"}
+            alt="Panda Icon"
+            width={40}
+            height={40}
+            className={`max-w-none`}
+          />
+      </Button>
+
+      {/* 其他app 先统一样式 */}
       {apps.map((app) => (
+        app.id !== "app1" &&
         <Button
           key={app.id}
           variant="ghost"
@@ -101,8 +129,12 @@ return (
 
 
 export function App(){
-  return AppDefault();
+  return <GlobalStateProvider>
+    <AppDefault />
+  </GlobalStateProvider>
 
   // 测试
-  // return <AudioRecorderComponent />
+  // return <GlobalStateProvider>
+  // <AppDefault />
+  // </GlobalStateProvider>
 }

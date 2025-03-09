@@ -1,7 +1,8 @@
 import { Buffer } from 'buffer';
 import { getWaveBlob, WavRecorder } from "webm-to-wav-converter";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useContext, createContext } from "react";
 
+import { useGlobalState, GlobalStateProvider } from './globalState';
 import { WAV_SAMPLE_RATE, WAV_BITS_PER_SAMPLE, WAV_CHANNELS } from '@/electron/define.ts';
 
 // 音频处理工具类
@@ -124,7 +125,8 @@ export class AudioRecorder {
 
 // 音频录制组件
 export const AudioRecorderComponent = () => {
-  const [recording, setRecording] = useState(false);
+  
+  const { recording, setRecording } = useGlobalState(); // recording使用全局状态中的
   const [audioURL, setAudioURL] = useState<string | null>(null);
   const recorderRef = useRef<AudioRecorder>(new AudioRecorder());
 

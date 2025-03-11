@@ -221,6 +221,7 @@ fetch('https://api.siliconflow.cn/v1/user/info', options)
 import * as fs from 'fs';
 import * as url from 'url';
 import * as path from 'path';
+import { UserFileUtil } from './define.js';
 
 const sleep = (ms: number): Promise<void> => {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -260,8 +261,9 @@ async function saveMp3FromStream(response: Response, filePath: string) {
 // api调用类
 export class SiliconFlow {
   private apiUrl: string = 'https://api.siliconflow.cn/v1';
-  private apiKey: string;
-  constructor(apiKey: string) {
+  private apiKey: string = '';
+
+  setApiKey(apiKey: string) {
     this.apiKey = apiKey;
   }
 
@@ -287,6 +289,15 @@ export class SiliconFlow {
       throw error;
     }
 
+  }
+
+  // 获取余额
+  async getBalance() {
+    const userInfo = await this.getUserInfo();
+    const totalBalance = userInfo['data']['totalBalance'];    // 总余额
+    const chargeBalance = userInfo['data']['chargeBalance'];  // 充值余额
+    const balance = userInfo['data']['balance'];              // 赠送余额
+    return [totalBalance, chargeBalance, balance];
   }
 
   // 获取用户模型列表
@@ -469,32 +480,36 @@ export class SiliconFlow {
 }
 
 
-export function SiliconFlowKeyDefault(): string {
-  /*
-  从json中读取key
-  './user_root/key.json'
-  {
-    "siliconflow": {
-      "key": "sk-"
-    }
-  }
-  */
-  const keyFile = fs.readFileSync('./user_dir/key.json', 'utf-8');
-  const key = JSON.parse(keyFile).siliconflow.key;
-  return key;
-}
+// export function SiliconFlowKeyDefault(): string {
+//   /*
+//   从json中读取key
+//   './user_root/key.json'
+//   {
+//     "siliconflow": {
+//       "key": "sk-"
+//     }
+//   }
+//   */
+//   const keyFile = fs.readFileSync('./user_dir/key.json', 'utf-8');
+//   const key = JSON.parse(keyFile).siliconflow.key;
+//   return key;
+// }
 
 // 测试类
 export class SiliconFlowTest {
   private siliconflow: SiliconFlow;
   constructor(key: string) {
-    this.siliconflow = new SiliconFlow(key);
+    this.siliconflow = new SiliconFlow();
+    this.siliconflow.setApiKey(key);
   }
 
   async testBasic() {
     // 获取用户账户信息
     const userInfo = await this.siliconflow.getUserInfo();
-    console.log(userInfo);
+    // console.log(userInfo);
+    // 获取余额
+    const [totalBalance, chargeBalance, balance] = await this.siliconflow.getBalance();
+    console.log(`总余额: ${totalBalance}, 充值余额: ${chargeBalance}, 赠送余额: ${balance}`);
 
     // 获取用户模型列表
     const models = await this.siliconflow.getModels();
@@ -528,18 +543,14 @@ export class SiliconFlowTest {
 
 }
 
-async function main() {
+if (import.meta.url === url.pathToFileURL(process.argv[1]).href) {
   // 测试SiliconFlow
   // 输入key
-  const key = SiliconFlowKeyDefault();
+  const key = UserFileUtil.readSiliconflowKey();
 
   // 测试
   const test = new SiliconFlowTest(key);
-  // await test.testBasic();
-  await test.test();
+  await test.testBasic();
+  // await test.test();
   // await test.testWav2Text();
-}
-
-if (import.meta.url === url.pathToFileURL(process.argv[1]).href) {
-  main();
 }

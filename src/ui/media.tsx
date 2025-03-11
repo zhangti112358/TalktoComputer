@@ -2,8 +2,8 @@ import { Buffer } from 'buffer';
 import { getWaveBlob, WavRecorder } from "webm-to-wav-converter";
 import { useState, useEffect, useRef, useContext, createContext } from "react";
 
-import { useGlobalState, GlobalStateProvider } from './globalState';
-import { WAV_SAMPLE_RATE, WAV_BITS_PER_SAMPLE, WAV_CHANNELS } from '@/electron/define.ts';
+import { useGlobalState } from './globalState';
+import { WAV_SAMPLE_RATE, WAV_BITS_PER_SAMPLE, WAV_CHANNELS, sendTextType } from '@/electron/computer/define';
 
 // 音频处理工具类
 export class MediaUtils {
@@ -107,7 +107,6 @@ export class AudioRecorder {
         console.log('音频大小:', wavBuffer.length, '字节');
         const result = await window.electron.sendAudioData(wavBuffer);
         console.log('音频传输结果:', result);
-
 
         const audioUrl = URL.createObjectURL(audioBlobWebm);
         resolve(audioUrl);

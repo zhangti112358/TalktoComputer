@@ -13,6 +13,13 @@ export const WAV_SAMPLE_RATE = 16000;
 export const WAV_BITS_PER_SAMPLE = 16;
 export const WAV_CHANNELS = 1;
 
+// 文本发送类型
+export enum sendTextType {
+  siliconflowKey = 'siliconflowKey',
+  getSiliconflowBalance = 'getSiliconflowBalance',
+  getSiliconflowKey = 'getSiliconflowKey',
+}
+
 // 程序使用的文件路径
 export class FilePath {
 
@@ -57,9 +64,23 @@ export class UserFileUtil {
     return fs.existsSync(FilePath.keyFile());
   }
 
+  /*
+  从json中读取key
+  'key.json'
+  {
+    "siliconflow": {
+      "key": "sk-"
+    }
+  }
+  */
   static writeSiliconflowKey(key:string){
+    // 确保目录存在
+    const dirPath = FilePath.systemDir();
+    fs.mkdirSync(dirPath, { recursive: true });
+    
     // 如果文件存在 直接写入 如果不存在 创建文件
     const filePath = FilePath.keyFile();
+    console.log('writeSiliconflowKey', filePath);
     if (fs.existsSync(filePath)) {
       // 读取json文件
       const data = fs.readFileSync(filePath, 'utf-8');

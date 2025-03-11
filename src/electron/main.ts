@@ -7,23 +7,13 @@ import path from 'path';
 import { ipcMainHandle, isDev, portDev } from './util.js'
 import { getPreloadPath, getUIPath } from './pathResolver.js';
 import { pollResources, getStaticData } from './resourceManager.js';
-import { im } from 'mathjs';
-import { SiliconFlow, SiliconFlowKeyDefault } from './computer/siliconflow.js';
-import { ContextReasoner } from './computer/reasoner.js';
+import { ContextReasoner, ComputerExecutor } from './computer/reasoner.js';
 
-import { VOICE_INPUT_SHORTCUT } from './define.js';
+import { VOICE_INPUT_SHORTCUT, sendTextType } from './computer/define.js';
 
 // 语音输入快捷键
 const voiceInputShortcut = VOICE_INPUT_SHORTCUT;
 const hasMicrophonePermission = systemPreferences.getMediaAccessStatus('microphone') === 'granted';
-
-
-// 字符保存文件
-async function saveTextToFile(text: string, filePath: string) {
-      // 随便创建一个buffer保存，字符串转buffer
-      const buffer = Buffer.from(text);
-      await fs.promises.writeFile(filePath, buffer);
-}
 
 app.on('ready', async () =>  {
   const mainWindow = new BrowserWindow({
@@ -75,28 +65,13 @@ app.on('ready', async () =>  {
     }
   });
 
-  const reasoner = new ContextReasoner();
-  await reasoner.init();
+  const computerExecutor = new ComputerExecutor();
+  computerExecutor.init();
 
-  // ipcMainHandle('sendAudio', (audioData) => {
-  //   return getStaticData();
-  // });
-  let siliconflow =  new SiliconFlow(SiliconFlowKeyDefault());
-// 在 main.ts 中
+  // 接受前端发送的音频数据
   ipcMain.handle('sendAudio', async (event, audioData: Buffer) => {
     try {
-      // debug 
-      // const audioPath ='./audio.wav';
-      // await fs.promises.writeFile(audioPath, audioData);
-      // console.log('audioPath', audioPath);
-      // console.log('audioData', audioData.length);
-
-      // 语音识别
-      const result = await siliconflow.speechWavToText(audioData);
-      console.log('result', result);
-
-      // 判断需求并执行
-      await reasoner.reason(result);
+      const result = await computerExecutor.executeAudio(audioData);
 
       return { success: true };
     } catch(err: any) {
@@ -104,4 +79,26 @@ app.on('ready', async () =>  {
     }
   });
 
+  // 接受前端发送的文本数据
+  ipcMain.handle('sendText', async (event, payload: { type: string, text: string }) => {
+    const { type, text } = payload;
+    console.log('sendText', type, text);
+    
+    try {
+      // 根据不同的类型处理文本
+      switch (type) {
+        case sendTextType.siliconflowKey:
+          return await computerExecutor.initSiliconflowKey(text);
+        case sendTextType.getSiliconflowBalance:
+          return await computerExecutor.getSiliconflowBalance();
+          case sendTextType.getSiliconflowKey:
+            return await computerExecutor.getSiliconflowKey();
+        default:
+          console.log('Unknown type', type);
+          return 'error';
+      }
+    } catch(err: any) {
+      return 'error';
+    }
+  });
 });

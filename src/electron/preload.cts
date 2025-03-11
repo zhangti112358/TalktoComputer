@@ -8,6 +8,7 @@ electron.contextBridge.exposeInMainWorld('electron', {
     }),
   getStaticData: () => ipcInvoke('getStaticData'),
   sendAudioData: (audioData) => ipcInvoke('sendAudio', audioData),
+  sendTextData: (type, text) => ipcInvoke('sendText', { type, text }),
   
   // ipc
   ipcRenderer: {

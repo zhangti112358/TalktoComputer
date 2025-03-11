@@ -1,19 +1,46 @@
 import { AppSidebar } from "@/components/app-home-sidebar"
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { RefreshCcw } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 
+
+import { sendTextType } from '@/electron/computer/define';
+import { useGlobalState } from './globalState';
+
+
 // ... 替换选中的行:
 // 输入key（隐藏具体值） 刷新余额按钮 余额显示
 const ApiKeySection = () => {
-  const [apiKey, setApiKey] = useState("");
-  const [balance, setBalance] = useState<string | null>(null);
+  const {apiKey, setApiKey} = useGlobalState();
+  const {balance, setBalance} = useGlobalState();
   const [loading, setLoading] = useState(false);
+
+
+  // api key变化
+  const handleApiKeyChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newApiKey = e.target.value;
+    setApiKey(newApiKey);
+  };
+
+  // 回车更新key
+  const hadleKeyDown = async (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      try {
+        // 调用保存 API Key 的函数
+        await window.electron.sendTextData(sendTextType.siliconflowKey, apiKey);
+        console.log('API Key 已保存');
+        // 保存成功后，获取余额
+        fetchBalance();
+      } catch (error) {
+        console.error('保存 API Key 失败:', error);
+      }
+    }
+  }
 
   const fetchBalance = async () => {
     if (!apiKey) {
@@ -24,8 +51,8 @@ const ApiKeySection = () => {
     try {
       // 这里需要实现实际的余额获取逻辑
       // 示例实现:
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setBalance("$10.50"); // 模拟获取到的余额
+      const balance = await window.electron.sendTextData(sendTextType.getSiliconflowBalance, '');
+      setBalance(balance); // 模拟获取到的余额
     } catch (error) {
       console.error("获取余额失败:", error);
     } finally {
@@ -43,9 +70,10 @@ const ApiKeySection = () => {
               <Input 
                 id="apiKey"
                 type="password" 
-                value={apiKey} 
-                onChange={(e) => setApiKey(e.target.value)}
-                placeholder="输入您的 API Key" 
+                value={apiKey}
+                onChange={(e) => handleApiKeyChange(e)}
+                onKeyDown={(e) => hadleKeyDown(e)}
+                placeholder="输入您的 Key 然后按回车"
                 className="flex-1"
               />
               <Button 

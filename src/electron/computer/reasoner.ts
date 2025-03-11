@@ -7,8 +7,8 @@ import { exec, spawn } from 'child_process';
 import robot from 'robotjs';
 import { clipboard } from 'electron';
 
-import { FilePath, UserFileUtil } from '../define.js';
-import { SiliconFlow, SiliconFlowKeyDefault } from './siliconflow.js';
+import { FilePath, UserFileUtil } from './define.js';
+import { SiliconFlow } from './siliconflow.js';
 
 // 模拟键盘操作
 class KerboardOperator {
@@ -138,7 +138,11 @@ export class SentenceSimilarity {
   textEmbd: math.Matrix = math.matrix();
 
   constructor() {
-    this.siliconFlow = new SiliconFlow(SiliconFlowKeyDefault());
+    this.siliconFlow = new SiliconFlow();
+  }
+
+  setApiKey(key: string) {
+    this.siliconFlow.setApiKey(key);
   }
 
   async embedding(text: string): Promise<number[]> {
@@ -347,6 +351,9 @@ export class ContextReasoner {
   // 对文字进行操作
   textOperator: TextOprator = new TextOprator();
 
+  setApiKey(key: string) {
+    this.similarity.setApiKey(key);
+  }
 
   async init(defaultSearchEngine: SearchEngine = SearchEngine.Bing, similarityThreshold: number = 0.6) {
     this.similarityThreshold = similarityThreshold;
@@ -392,6 +399,8 @@ export class ContextReasoner {
     this.textOperator.flagCopy = true;
     this.textOperator.flagPaste = false;
     this.textOperator.flagEnter = false;
+    // this.textOperator.flagPaste = true;
+    // this.textOperator.flagEnter = true;
   }
 
   async opSimilarity(text: string) {
@@ -461,6 +470,7 @@ export class ContextReasoner {
 
 export class ComputerExecutor {
   flagInitSuccess: boolean = false;
+  siliconflow: SiliconFlow = new SiliconFlow();
   reasoner: ContextReasoner;
   constructor() {
     this.reasoner = new ContextReasoner();
@@ -471,53 +481,116 @@ export class ComputerExecutor {
     this.init();
   }
 
+  async getSiliconflowKey() {
+    let key = UserFileUtil.readSiliconflowKey();
+    return key;
+  }
+
+  async getSiliconflowBalance() {
+    // 获取余额
+    const [totalBalance, chargeBalance, balance] = await this.siliconflow.getBalance();
+    const balanceStr = `总余额: ${totalBalance}, 充值余额: ${chargeBalance}, 赠送余额: ${balance}`;
+    return balanceStr;
+  }
+
+
   async init() {
     // 读取key
     let key = '';
     try {
       key = UserFileUtil.readSiliconflowKey();
+      this.siliconflow = new SiliconFlow();
+      this.siliconflow.setApiKey(key);
+      const [totalBalance, chargeBalance, balance] = await this.siliconflow.getBalance();
+      console.log('key ok. balance:', totalBalance);
     }
     catch (error) {
       console.error('读取key失败:', error);
       return;
     }
-    let siliconFlow = new SiliconFlow(key);
 
     // 推理单元初始化
+    this.reasoner.setApiKey(key);
     await this.reasoner.init();
-
-    // 监听快捷键初始化
 
     this.flagInitSuccess = true;
   }
 
   async executeAudio(audioData: Buffer) {
-    
+    if (!this.flagInitSuccess) {
+      console.error('未初始化');
+      return;
+    }
+    // debug 
+    // const audioPath ='./audio.wav';
+    // await fs.promises.writeFile(audioPath, audioData);
+
+    // 语音识别
+    const result = await this.siliconflow.speechWavToText(audioData);
+    console.log('result', result);
+
+    // 判断需求并执行
+    await this.reasoner.reason(result);
   }
 
   async executeText(text: string) {
+    // 判断需求并执行
     await this.reasoner.reason(text);
+  }
+
+  
+  async log() {
   }
 }
 
-async function main() {
-  let reasoner = new ContextReasoner();
-  await reasoner.init();
-  // await reasoner.reason('给鲸鱼发消息');
-  await reasoner.reason('知乎搜索typescript');
-  // await reasoner.reason('玩传送门');
 
+/**
+ * 计算机操作测试类
+ * 用于测试 ContextReasoner 和 SentenceSimilarity 的功能
+ */
+class ComputerTest {
+  /**
+   * 测试上下文推理器功能
+   */
+  static async testContextReasoner() {
+    console.log('=== 测试上下文推理器 ===');
+    let reasoner = new ContextReasoner();
+    await reasoner.init();
+    
+    // 测试网站访问
+    // await reasoner.reason('给鲸鱼发消息');
+    
+    // 测试搜索功能
+    await reasoner.reason('知乎搜索typescript');
+    
+    // 测试steam启动游戏
+    // await reasoner.reason('玩传送门');
+  }
 
-  // const ss = new SentenceSimilarity();
+  /**
+   * 测试文本相似度功能
+   */
+  static async testSentenceSimilarity() {
+    console.log('=== 测试文本相似度 ===');
+    const ss = new SentenceSimilarity();
 
-  // // 文字embd
-  // const textList = ['苹果', '梨', '香蕉', '橘子'];
-  // await ss.initFromSentenceList(textList);
-  // let similarityMatrix = await ss.similarity('苹果');
-  // console.log(similarityMatrix);
+    // 文字embedding测试
+    const textList = ['苹果', '梨', '香蕉', '橘子'];
+    console.log(`初始化文本列表: ${textList.join(', ')}`);
+    await ss.initFromSentenceList(textList);
+    
+    // 测试相似度计算
+    const testText = '苹果';
+    console.log(`测试文本: ${testText}`);
+    let similarityMatrix = await ss.similarity(testText);
+    console.log('相似度矩阵结果:');
+    console.log(similarityMatrix);
+  }
 
 }
 
+ 
 if (import.meta.url === url.pathToFileURL(process.argv[1]).href) {
-  main();
+  // 测试
+  await ComputerTest.testContextReasoner();
 }

@@ -1,5 +1,6 @@
 /* 全局状态 */
-import React, { createContext, useState, useReducer, useContext, ReactNode } from 'react';
+import React, { createContext, useState, useEffect, useReducer, useContext, ReactNode } from 'react';
+import { sendTextType } from '@/electron/computer/define';
 
 // 全局状态类型
 interface GlobalStateType {
@@ -10,6 +11,12 @@ interface GlobalStateType {
   // 主界面
   activeApp: string | null;
   setActiveApp: (activeApp: string | null) => void;
+
+  // 系统信息
+  apiKey: string;
+  setApiKey: (apiKey: string) => void;
+  balance: string | null;
+  setBalance: (balance: string | null) => void;
 };
 
 // 创建全局状态上下文
@@ -23,12 +30,44 @@ export const GlobalStateProvider = ({ children }: {children:ReactNode}) => {
   // 主界面状态
   const [activeApp, setActiveApp] = useState<string | null>(null);
 
+  // 系统信息
+  const [apiKey, setApiKey] = useState("");
+  const [balance, setBalance] = useState<string | null>(null);
+  // 使用 useEffect 在组件初始化时获取数据
+  useEffect(() => {
+    const initializeData = async () => {
+      try {
+        // 获取初始 API Key
+        const initialApiKey = await window.electron.sendTextData(sendTextType.getSiliconflowKey, '');
+        if (initialApiKey) {
+          setApiKey(initialApiKey);
+        }
+        
+        // 如果有 API Key，也获取余额
+        if (initialApiKey) {
+          const initialBalance = await window.electron.sendTextData(sendTextType.getSiliconflowBalance, '');
+          if (initialBalance) {
+            setBalance(initialBalance);
+          }
+        }
+      } catch (error) {
+        console.error('初始化数据失败:', error);
+      } 
+    };
+    
+    initializeData();
+  }, []); // 空依赖数组，只在组件挂载时运行一次
+
   // 将状态提供给子组件
   const value = {
     recording,
     setRecording,
     activeApp,
     setActiveApp,
+    apiKey,
+    setApiKey,
+    balance,
+    setBalance
   };
 
   return (

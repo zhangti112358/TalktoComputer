@@ -9,7 +9,7 @@ import { useGlobalState, GlobalStateProvider } from './globalState';
 // apps
 import { AppHome } from "./AppHome.tsx";
 import { AppShortcut } from "./AppShortcut.tsx";
-import { AppChat } from "./AppChat.tsx";
+import { AppLog } from "./AppLog.tsx";
 
 // media
 import { AudioRecorderComponent } from './media.tsx';
@@ -19,11 +19,40 @@ export function AppDefault() {
   const { activeApp, setActiveApp } = useGlobalState();
   const { recording, setRecording } = useGlobalState();
 
+  // 使用ref记录初始渲染状态
+  const isFirstRender = useRef(true);
+
+  // 控制翻转动画的状态
+  const [isFlipping, setIsFlipping] = useState(false);
+  const [displayedImage, setDisplayedImage] = useState(recording ? "./data/panda_front.JPG" : "./data/panda_back.JPG");
+  
+  // 监听recording状态变化，触发翻转动画
+  useEffect(() => {
+    // 跳过首次渲染时的动画
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+
+    if (isFlipping) return; // 避免动画正在进行时再次触发
+    
+    setIsFlipping(true);
+    // 在动画中途切换图片
+    setTimeout(() => {
+      setDisplayedImage(recording ? "./data/panda_front.JPG" : "./data/panda_back.JPG");
+    }, 100); // 动画持续时间的一半
+    
+    // 动画结束后重置状态
+    setTimeout(() => {
+      setIsFlipping(false);
+    }, 200); // 动画完整持续时间
+  }, [recording]);
+
   // App 数据
   const apps = [
     { id: "app1", name: "Home", icon: <Home size={10} /> },
-    { id: "app2", name: "Shortcut", icon: <Command size={10} /> },
-    { id: "app3", name: "Chat", icon: <MessageSquare size={10} /> },
+    { id: "app2", name: "Shortcut", icon: <Command size={33} /> },
+    { id: "app3", name: "Log", icon: <MessageSquare size={33} /> },
   ];
 
 
@@ -41,8 +70,12 @@ return (
         )}
       {activeApp === "app2" && (
         <div>
-          <h2 className="text-lg font-semibold">App 2</h2>
-          <p>App 2 的内容</p>
+          <AppShortcut></AppShortcut>
+        </div>
+      )}
+      {activeApp === "app3" && (
+        <div>
+          <AppLog></AppLog>
         </div>
       )}
       {activeApp === null && (
@@ -69,7 +102,7 @@ return (
 
     {/* 底部导航栏 */}
     <div 
-      className="fixed bottom-0 left-0 right-0 flex justify-center items-center bg-gray-300 space-x-4 mx-auto"
+      className="fixed bottom-0 left-0 right-0 flex justify-center items-center bg-gray-800 bg-opacity-50 space-x-4 mx-auto"
       style={{
         height: NAV_HEIGHT,
         // 添加玻璃拟态效果
@@ -78,48 +111,47 @@ return (
       }}
     >
       {/* appHome */}
-      <Button
-        key="app1"
-        variant="ghost"
-        size="icon"
+      <div
         onClick={() => {
           if (activeApp === apps[0].id) {
-          setActiveApp(null)
-        }
-        else {
-          setActiveApp("app1")
-        }
+            setActiveApp(null)
+          }
+          else {
+            setActiveApp("app1")
+          }
         }}
-        className={`${activeApp === "app1" ? 'ring-2 ring-white' : ''} p-1`} // 添加内边距
-        >
-        <img
-            src={recording === true ? "./data/panda_front.JPG" : "./data/panda_back.JPG"}
+        className={`flex items-center justify-center cursor-pointer ${activeApp === "app1" ? 'ring-2 ring-white/50' : ''}`}
+      >
+        <div className={`transition-transform duration-200 ${isFlipping ? 'scale-x-0' : 'scale-x-100'}`}>
+          <img
+            src={displayedImage}
             alt="Panda Icon"
-            width={40}
-            height={40}
-            className={`max-w-none`}
+            width={50}
+            height={50}
+            className="max-w-none"
           />
-      </Button>
+        </div>
+      </div>
 
       {/* 其他app 先统一样式 */}
       {apps.map((app) => (
         app.id !== "app1" &&
-        <Button
+        <div
           key={app.id}
-          variant="ghost"
-          size="icon"
           onClick={() => {
             if (activeApp === app.id) {
-            setActiveApp(null)
-          }
-          else {
-            setActiveApp(app.id)
-          }
+              setActiveApp(null)
+            }
+            else {
+              setActiveApp(app.id)
+            }
           }}
-          className={`${activeApp === app.id ? 'ring-2 ring-white' : ''} p-1`} // 添加内边距
-          >
-          {app.icon}
-        </Button>
+          className={`flex items-center justify-center cursor-pointer ${activeApp === app.id ? 'ring-2 ring-white/50' : ''}`}
+        >
+          <div className="p-2 text-white">
+            {app.icon}
+          </div>
+        </div>
       ))}
     </div>
     <AudioRecorderComponent />

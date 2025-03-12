@@ -130,11 +130,6 @@ function Layout({ children }: { children: React.ReactNode }) {
 export function AppHome() {
   // const [number1, setNumber1]     = useState(0);
   return (
-      // <Layout>
-      //   <h2 className="text-lg font-semibold">App 1</h2>
-      //   <p>App 1 的内容</p>
-      //   {/* <p>${number1}</p> */}
-      // </Layout>
       <ApiKeySection />
     );
 }

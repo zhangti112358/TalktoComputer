@@ -91,8 +91,8 @@ app.on('ready', async () =>  {
           return await computerExecutor.initSiliconflowKey(text);
         case sendTextType.getSiliconflowBalance:
           return await computerExecutor.getSiliconflowBalance();
-          case sendTextType.getSiliconflowKey:
-            return await computerExecutor.getSiliconflowKey();
+        case sendTextType.getSiliconflowKey:
+          return await computerExecutor.getSiliconflowKey();
         default:
           console.log('Unknown type', type);
           return 'error';

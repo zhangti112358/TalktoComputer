@@ -319,7 +319,13 @@ export function DataTableDemo() {
   )
 }
 
-
+/*
+cv enter
+cmd 
+url
+file start
+steam https://store.steampowered.com/charts/mostplayed
+*/
 export function AppShortcut() {
     return (
       <div>

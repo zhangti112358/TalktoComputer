@@ -488,9 +488,15 @@ export class ComputerExecutor {
 
   async getSiliconflowBalance() {
     // 获取余额
-    const [totalBalance, chargeBalance, balance] = await this.siliconflow.getBalance();
-    const balanceStr = `总余额: ${totalBalance}, 充值余额: ${chargeBalance}, 赠送余额: ${balance}`;
-    return balanceStr;
+    try {
+      const [totalBalance, chargeBalance, balance] = await this.siliconflow.getBalance();
+      const balanceStr = `总余额: ${totalBalance}, 充值余额: ${chargeBalance}, 赠送余额: ${balance}`;
+      return balanceStr;
+    }
+    catch (error) {
+      console.error('获取余额失败:', error);
+      return '获取余额失败';
+    }
   }
 
 

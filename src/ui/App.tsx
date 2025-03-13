@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react'
 import './App.css'
 import { Button } from "@/components/ui/button"
-import { Home, Command, MessageSquare } from "lucide-react"; // 图标库
+import { Home, Star, MessageSquare } from "lucide-react"; // 图标库
 
 import { BACKGROUND_IMG, NAV_HEIGHT } from './Common.tsx';
 import { useGlobalState, GlobalStateProvider } from './globalState';
@@ -19,20 +19,12 @@ export function AppDefault() {
   const { activeApp, setActiveApp } = useGlobalState();
   const { recording, setRecording } = useGlobalState();
 
-  // 使用ref记录初始渲染状态
-  const isFirstRender = useRef(true);
-
   // 控制翻转动画的状态
   const [isFlipping, setIsFlipping] = useState(false);
   const [displayedImage, setDisplayedImage] = useState(recording ? "./data/panda_front.JPG" : "./data/panda_back.JPG");
   
   // 监听recording状态变化，触发翻转动画
   useEffect(() => {
-    // 跳过首次渲染时的动画
-    if (isFirstRender.current) {
-      isFirstRender.current = false;
-      return;
-    }
 
     if (isFlipping) return; // 避免动画正在进行时再次触发
     
@@ -51,7 +43,7 @@ export function AppDefault() {
   // App 数据
   const apps = [
     { id: "app1", name: "Home", icon: <Home size={10} /> },
-    { id: "app2", name: "Shortcut", icon: <Command size={33} /> },
+    { id: "app2", name: "Shortcut", icon: <Star size={33} /> },
     { id: "app3", name: "Log", icon: <MessageSquare size={33} /> },
   ];
 

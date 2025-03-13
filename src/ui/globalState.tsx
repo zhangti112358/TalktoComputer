@@ -1,9 +1,10 @@
 /* 全局状态 */
-import React, { createContext, useState, useEffect, useReducer, useContext, ReactNode } from 'react';
+import React, { createContext, useState, useEffect, useRef, useReducer, useContext, ReactNode } from 'react';
 import { sendTextType } from '@/electron/computer/define';
 
 // 全局状态类型
 interface GlobalStateType {
+
   // 音频录制
   recording: boolean;
   setRecording: (recording: boolean) => void;
@@ -67,7 +68,7 @@ export const GlobalStateProvider = ({ children }: {children:ReactNode}) => {
     apiKey,
     setApiKey,
     balance,
-    setBalance
+    setBalance,
   };
 
   return (

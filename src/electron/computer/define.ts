@@ -20,6 +20,25 @@ export enum sendTextType {
   getSiliconflowKey = 'getSiliconflowKey',
 }
 
+
+// 快捷指令相关的
+export enum ShortcutCommandType {
+  cmd       = 'cmd',
+  software  = 'software',
+  url       = 'url',
+  path      = 'path',
+  copyText  = 'copyText',
+  steam     = 'steam',
+}
+
+// 快捷指令存储格式
+export interface ShortcutCommand {
+  name: string;
+  type: ShortcutCommandType;
+  value: string;
+  embedding: number[];
+}
+
 // 程序使用的文件路径
 export class FilePath {
 
@@ -39,7 +58,10 @@ export class FilePath {
       // Linux: ~/.config/YourAppName
       dir = path.join(homeDir, '.config', appName);
     }
-    return dir;
+
+    // 放在computer文件夹 appName/computer
+    const dir_computer = path.join(dir, 'computer');
+    return dir_computer;
   }
 
   // system
@@ -55,6 +77,18 @@ export class FilePath {
   // app
   static appDir(): string {
     return path.join(this.rootDir(), 'app');
+  }
+
+  // app shortcut
+  static appShortcutDir(): string {
+    return path.join(this.appDir(), 'shortcut');
+  }
+
+  static appShortcutCommandFile(): string {
+    return path.join(this.appShortcutDir(), 'shortcut.json');         // 用户调整后的快捷指令
+  }
+  static appShortcutCommandFileDefault(): string {
+    return path.join(this.appShortcutDir(), 'shortcut_default.json'); // 默认快捷指令
   }
 }
 
@@ -112,4 +146,22 @@ export class UserFileUtil {
     }
     return key;
   }
+
+  static readShortcutCommandFile(filePath:string): ShortcutCommand[] {
+    let commands: ShortcutCommand[] = [];
+    // 读取json文件
+    const data = fs.readFileSync(filePath, 'utf-8');
+    const dataJson = JSON.parse(data);
+    commands = dataJson;
+    return commands;
+  }
+
+  static writeShortcutCommandFile(filePath:string, commands: ShortcutCommand[]) {
+    // 确保目录存在
+    const dirPath = path.dirname(filePath);
+    fs.mkdirSync(dirPath, { recursive: true });
+
+    fs.writeFileSync(filePath, JSON.stringify(commands, null, 2), 'utf-8');
+  }
+
 }

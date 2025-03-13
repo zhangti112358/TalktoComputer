@@ -98,6 +98,18 @@ const ApiKeySection = () => {
               <span className="text-sm text-muted-foreground">未获取余额</span>
             )}
           </div>
+
+          
+          {/* <div className="flex items-center gap-4 pt-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => window.open('https://cloud.siliconflow.cn/i/hyRgBGdj', '_blank')}
+              className="text-xs"
+            >
+              注册账号
+            </Button>
+          </div> */}
         </div>
       </CardContent>
     </Card>

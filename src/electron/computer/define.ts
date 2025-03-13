@@ -23,11 +23,12 @@ export enum sendTextType {
 
 // 快捷指令相关的
 export enum ShortcutCommandType {
-  cmd       = 'cmd',
-  software  = 'software',
-  url       = 'url',
-  path      = 'path',
-  copyText  = 'copyText',
+  search    = '搜索',
+  cmd       = '执行命令',
+  software  = '软件',
+  url       = '网页',
+  path      = '文件',
+  copyText  = '文本',
   steam     = 'steam',
 }
 
@@ -90,6 +91,7 @@ export class FilePath {
   static appShortcutCommandFileDefault(): string {
     return path.join(this.appShortcutDir(), 'shortcut_default.json'); // 默认快捷指令
   }
+
 }
 
 // 用户文件操作

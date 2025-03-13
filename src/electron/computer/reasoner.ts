@@ -3,11 +3,13 @@
 */
 import * as url from 'url';
 import * as math from 'mathjs';
+import * as path from 'path';
+import * as fs from 'fs';
 import { exec, spawn } from 'child_process';
 import robot from 'robotjs';
 import { clipboard } from 'electron';
 
-import { FilePath, UserFileUtil } from './define.js';
+import { FilePath, UserFileUtil, ShortcutCommandType, ShortcutCommand } from './define.js';
 import { SiliconFlow } from './siliconflow.js';
 
 // 模拟键盘操作
@@ -336,6 +338,82 @@ class TextOprator {
   }
 }
 
+// 快捷指令 默认值和存储
+export class ShortcutCommandUtil {
+  static getDefaultCommandList(){
+    let commandList:ShortcutCommand[] = [
+      // 网页
+      { name: '必应',         type: ShortcutCommandType.url, value: 'https://cn.bing.com', embedding: [] },
+      { name: '谷歌',         type: ShortcutCommandType.url, value: 'https://www.google.com', embedding: [] },
+      { name: '知乎',         type: ShortcutCommandType.url, value: 'https://www.zhihu.com', embedding: [] },
+      { name: '哔哩哔哩',     type: ShortcutCommandType.url, value: 'https://www.bilibili.com', embedding: [] },
+      { name: '小红书',       type: ShortcutCommandType.url, value: 'https://www.xiaohongshu.com', embedding: [] },
+      { name: 'Github',       type: ShortcutCommandType.url, value: 'https://github.com', embedding: [] },
+      { name: '给鲸鱼发消息',  type: ShortcutCommandType.url, value: 'https://chat.deepseek.com', embedding: [] },
+
+      // 软件
+      // { name: '打开vscode',    type: ShortcutCommandType.software, value: 'code', embedding: [] },
+      // { name: '谷歌浏览器',    type: ShortcutCommandType.software, value: 'chrome', embedding: [] },
+
+      // 游戏
+      { name: '玩传送门',       type: ShortcutCommandType.steam, value: '620', embedding: [] },
+      { name: '玩CS',           type: ShortcutCommandType.steam, value: '730', embedding: [] },
+      { name: '玩dota2',        type: ShortcutCommandType.steam, value: '570', embedding: [] },
+      { name: '玩GTA5',         type: ShortcutCommandType.steam, value: '271590', embedding: [] },
+      { name: '玩蔚蓝',         type: ShortcutCommandType.steam, value: '504230', embedding: [] },
+      { name: '玩黑神话悟空',    type: ShortcutCommandType.steam, value: '2358720', embedding: [] },
+    ];
+    return commandList;
+  }
+
+  static init() {
+    // 初始化快捷指令 如果default文件不存在 则写入默认值
+    // 如果快捷指令文件不存在 则写入默认值
+    // 非第一次使用情况直接读取这个文件
+    const defaultCommandList = ShortcutCommandUtil.getDefaultCommandList();
+    const defaultCommandPath = FilePath.appShortcutCommandFileDefault();
+    const commandPath = FilePath.appShortcutCommandFile();
+    if (fs.existsSync(defaultCommandPath) === false) {
+      UserFileUtil.writeShortcutCommandFile(defaultCommandPath, defaultCommandList);
+    }
+    if (fs.existsSync(commandPath) === false) {
+      UserFileUtil.writeShortcutCommandFile(commandPath, defaultCommandList);
+    }
+
+    // 读取快捷指令
+    let commandList = UserFileUtil.readShortcutCommandFile(commandPath);
+    return commandList;
+  }
+
+  static command2op(command: ShortcutCommand) {
+    let op: CommandOperator = new CommandOperator('unkown', '');
+    if (command.type === ShortcutCommandType.url) {
+      op = new ChromeUrlOperator(command.name, command.value);
+    }
+    else if (command.type === ShortcutCommandType.steam) {
+      op = new SteamAppOperator(command.name, parseInt(command.value));
+    }
+    return op;
+  }
+
+  static commandList2opList(commandList: ShortcutCommand[]) {
+    let opList: CommandOperator[] = [];
+    for (let i = 0; i < commandList.length; i++) {
+      let command = commandList[i];
+      let op = ShortcutCommandUtil.command2op(command);
+      opList.push(op);
+    }
+    return opList;
+  }
+
+  static getOpList() {
+    let commandList = ShortcutCommandUtil.init();
+    let opList = ShortcutCommandUtil.commandList2opList(commandList);
+    return opList;
+  }
+
+}
+
 // 理解需求和执行
 export class ContextReasoner {
   // 操作列表
@@ -358,24 +436,7 @@ export class ContextReasoner {
   async init(defaultSearchEngine: SearchEngine = SearchEngine.Bing, similarityThreshold: number = 0.6) {
     this.similarityThreshold = similarityThreshold;
     // 各种操作的集合
-    this.opList = [
-      // 网页
-      new ChromeUrlOperator('必应', 'https://cn.bing.com'),
-      new ChromeUrlOperator('谷歌', 'https://www.google.com'),
-      new ChromeUrlOperator('知乎', 'https://www.zhihu.com'),
-      new ChromeUrlOperator('哔哩哔哩', 'https://www.bilibili.com'),
-      new ChromeUrlOperator('小红书', 'https://www.xiaohongshu.com'),
-      new ChromeUrlOperator('Github', 'https://github.com'),
-      new ChromeUrlOperator('给鲸鱼发消息', 'https://chat.deepseek.com'),
-
-      // 游戏
-      new SteamAppOperator('玩传送门', 620),
-      new SteamAppOperator('玩CS', 730),
-      new SteamAppOperator('玩dota', 570),
-      new SteamAppOperator('玩GTA5', 271590),
-      new SteamAppOperator('玩蔚蓝', 504230),
-      new SteamAppOperator('玩黑神话悟空', 2358720),
-    ];
+    this.opList = ShortcutCommandUtil.getOpList();
 
     this.opNameList = this.opList.map(op => op.name);
 

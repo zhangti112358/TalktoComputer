@@ -93,6 +93,10 @@ app.on('ready', async () =>  {
           return await computerExecutor.getSiliconflowBalance();
         case sendTextType.getSiliconflowKey:
           return await computerExecutor.getSiliconflowKey();
+        case sendTextType.updateShortcutCommand:
+          return await computerExecutor.updateShortcutCommand(text);
+        case sendTextType.getShortcutCommand:
+          return await computerExecutor.getShortcutCommand();
         default:
           console.log('Unknown type', type);
           return 'error';

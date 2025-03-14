@@ -338,7 +338,7 @@ class TextOprator {
   }
 }
 
-// 快捷指令 默认值和存储
+// 快捷指令 默认值存储在默认文件，用户修改后存储在另一个文件
 export class ShortcutCommandUtil {
   static getDefaultCommandList(){
     let commandList:ShortcutCommand[] = [
@@ -383,6 +383,17 @@ export class ShortcutCommandUtil {
     // 读取快捷指令
     let commandList = UserFileUtil.readShortcutCommandFile(commandPath);
     return commandList;
+  }
+
+  static getCommandList() {
+    const commandPath = FilePath.appShortcutCommandFile();
+    let commandList = UserFileUtil.readShortcutCommandFile(commandPath);
+    return commandList;
+  }
+
+  static updateCommandList(commandList: ShortcutCommand[]) {
+    const commandPath = FilePath.appShortcutCommandFile();
+    UserFileUtil.writeShortcutCommandFile(commandPath, commandList);
   }
 
   static command2op(command: ShortcutCommand) {
@@ -560,6 +571,28 @@ export class ComputerExecutor {
     }
   }
 
+  async updateShortcutCommand(text: string) {
+    // 更新快捷指令
+    try {
+      let commandList = JSON.parse(text);
+      ShortcutCommandUtil.updateCommandList(commandList);
+    }
+    catch (error) {
+      console.error('更新快捷指令失败:', error);
+      return '更新快捷指令失败';
+    }
+
+    // 重新初始化
+    this.reasoner.init();
+
+    return '更新成功';
+  }
+
+  async getShortcutCommand() {
+    // 获取快捷指令
+    let commandList = ShortcutCommandUtil.getCommandList();
+    return JSON.stringify(commandList);
+  }
 
   async init() {
     // 读取key

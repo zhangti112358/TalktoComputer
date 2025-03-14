@@ -18,6 +18,8 @@ export enum sendTextType {
   siliconflowKey = 'siliconflowKey',
   getSiliconflowBalance = 'getSiliconflowBalance',
   getSiliconflowKey = 'getSiliconflowKey',
+  getShortcutCommand = 'getShortcutCommand',
+  updateShortcutCommand = 'updateShortcutCommand',
 }
 
 

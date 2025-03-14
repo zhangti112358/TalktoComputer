@@ -1,6 +1,6 @@
 /* 全局状态 */
 import React, { createContext, useState, useEffect, useRef, useReducer, useContext, ReactNode } from 'react';
-import { sendTextType } from '@/electron/computer/define';
+import { sendTextType, ShortcutCommand, ShortcutCommandType } from '@/electron/computer/define';
 
 // 全局状态类型
 interface GlobalStateType {
@@ -18,6 +18,10 @@ interface GlobalStateType {
   setApiKey: (apiKey: string) => void;
   balance: string | null;
   setBalance: (balance: string | null) => void;
+
+  // app shortcut
+  shortcutCommandList: ShortcutCommand[];
+  setShortcutCommandList: (shortcutCommand: ShortcutCommand[]) => void;
 };
 
 // 创建全局状态上下文
@@ -34,6 +38,10 @@ export const GlobalStateProvider = ({ children }: {children:ReactNode}) => {
   // 系统信息
   const [apiKey, setApiKey] = useState("");
   const [balance, setBalance] = useState<string | null>(null);
+
+  // app shortcut
+  const [shortcutCommandList, setShortcutCommandList] = useState<ShortcutCommand[]>([]);
+
   // 使用 useEffect 在组件初始化时获取数据
   useEffect(() => {
     const initializeData = async () => {
@@ -50,6 +58,12 @@ export const GlobalStateProvider = ({ children }: {children:ReactNode}) => {
           if (initialBalance) {
             setBalance(initialBalance);
           }
+        }
+
+        // 获取快捷指令列表
+        const initialShortcutCommandList = await window.electron.sendTextData(sendTextType.getShortcutCommand, '');
+        if (initialShortcutCommandList) {
+          setShortcutCommandList(JSON.parse(initialShortcutCommandList));
         }
       } catch (error) {
         console.error('初始化数据失败:', error);
@@ -69,6 +83,8 @@ export const GlobalStateProvider = ({ children }: {children:ReactNode}) => {
     setApiKey,
     balance,
     setBalance,
+    shortcutCommandList,
+    setShortcutCommandList,
   };
 
   return (

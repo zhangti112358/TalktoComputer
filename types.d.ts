@@ -16,7 +16,7 @@ type StaticData = {
 type EventPayloadMapping = {
   statistics: Statistics;
   getStaticData: StaticData;
-  sendAudio: boolean;
+  sendAudio: string;
   sendText: string;
 };
 
@@ -34,7 +34,7 @@ interface Window {
       callback: (statistics: Statistics) => void
     ) => UnsubscribeFunction;
     getStaticData: () => Promise<StaticData>;
-    sendAudioData: (audioData: Buffer) => Promise<boolean>;
+    sendAudioData: (audioData: Buffer) => Promise<string>;
     sendTextData: (type: string, text: string) => Promise<string>;
   };
 }

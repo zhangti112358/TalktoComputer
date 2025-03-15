@@ -17,15 +17,15 @@ export function portDev(): string {
 // 这样把事件名和事件参数的类型绑定在一起。是在EventPayloadMapping中定义好的，类型安全
 export function ipcMainHandle<Key extends keyof EventPayloadMapping>(
   key: Key,
-  handler: () => EventPayloadMapping[Key]
+  handler: (event: Electron.IpcMainInvokeEvent, ...args: any[]) => Promise<EventPayloadMapping[Key]> | EventPayloadMapping[Key]
 ) {
   
-  ipcMain.handle(key, (event) => {
+  ipcMain.handle(key, async (event, ...args) => {
     if (!event.senderFrame) {
       throw new Error('Event sender frame is null');
     }
     validateEventFrame(event.senderFrame);
-    return handler();
+    return handler(event, ...args);
 });
 }
 

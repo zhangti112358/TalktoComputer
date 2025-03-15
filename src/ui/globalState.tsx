@@ -26,6 +26,10 @@ interface GlobalStateType {
   // 文字操作
   textAutoProcess: TextAutoProcess;
   setTextAutoProcess: (textAutoProcess: TextAutoProcess) => void;
+
+  // app log
+  logList: string[];
+  setLogList: (logList: string[]) => void;
 };
 
 // 创建全局状态上下文
@@ -54,9 +58,19 @@ export const GlobalStateProvider = ({ children }: {children:ReactNode}) => {
   };
   const [textAutoProcess, setTextAutoProcess] = useState<TextAutoProcess>(defaultTextAutoProcess);
 
+  // app log
+  const [logList, setLogList] = useState<string[]>([]);
+
+  // 初始化状态 让 useEffect 只运行一次 因为react在StrictMode下会运行两次
+  const hasInitializedRef = useRef(false);
 
   // 使用 useEffect 在组件初始化时获取数据
   useEffect(() => {
+    if (hasInitializedRef.current) {
+      return;
+    }
+    hasInitializedRef.current = true;
+
     const initializeData = async () => {
       try {
         // 获取初始 API Key
@@ -87,6 +101,20 @@ export const GlobalStateProvider = ({ children }: {children:ReactNode}) => {
     };
     
     initializeData();
+
+    // 注册事件监听器
+    const logListener = (event: any, message: string) => {
+      // 将新的日志添加到日志列表中
+      setLogList(prevLogList => [...prevLogList, message]);
+    };
+  
+
+    window.electron.ipcRenderer.on('log', logListener);
+
+    // 清理函数，组件卸载时移除监听器
+    return () => {
+      window.electron.ipcRenderer.removeListener('log', logListener);
+    };
   }, []); // 空依赖数组，只在组件挂载时运行一次
 
   // 将状态提供给子组件
@@ -103,6 +131,8 @@ export const GlobalStateProvider = ({ children }: {children:ReactNode}) => {
     setShortcutCommandList,
     textAutoProcess,
     setTextAutoProcess,
+    logList,
+    setLogList,
   };
 
   return (

@@ -434,7 +434,7 @@ export class ShortcutCommandUtil {
 
 // 理解需求和执行
 export class ContextReasoner {
-  // 操作列表
+  // 操作列表和相似度计算
   opList: CommandOperator[] = [];
   opNameList: string[] = [];
   similarity: SentenceSimilarity = new SentenceSimilarity();
@@ -446,6 +446,9 @@ export class ContextReasoner {
 
   // 对文字进行操作
   textOperator: TextOprator = new TextOprator();
+
+  // 返回结果
+  result: string = '';
 
   setApiKey(key: string) {
     this.similarity.setApiKey(key);
@@ -499,16 +502,17 @@ export class ContextReasoner {
       }
     }
     let op = this.opList[maxIndex];
-    console.log(`最相似的操作是：${op.name}，相似度：${maxSimilarity}`);
 
     // 执行
     let executeResult = '';
     if (maxSimilarity > this.similarityThreshold) {
       executeResult = await op.execute();
+      executeResult = `最相似（${(maxSimilarity * 100).toFixed(0)}%）：${op.name} 执行`;
     }
     else{
-      console.log('未匹配');
+      executeResult = `最相似（${(maxSimilarity * 100).toFixed(0)}%）：${op.name} 不执行`;
     }
+    // console.log(executeResult);
     return executeResult;
   }
 
@@ -520,9 +524,11 @@ export class ContextReasoner {
       if (text.startsWith(op.nameWithSearch)) {
         // 把搜索关键词提取出来
         let textSearch = text.slice(op.nameWithSearch.length);
-        console.log(op.nameWithSearch, textSearch);
+        // console.log(op.nameWithSearch, textSearch);
         await op.search(textSearch);
         flagSearch = true;
+
+        this.result = `${op.nameWithSearch}`;
         break;
       }
     }
@@ -531,19 +537,22 @@ export class ContextReasoner {
   }
 
   async reason(text: string) {
+    this.result = '';
+
     // 空字符串不处理
     if (text === '') {
-      console.log('空字符串 不处理');
-      return;
+      this.result = '空字符串 不处理';
     }
-    if (await this.isSearch(text)) {
+    else if (await this.isSearch(text)) {
       // isSearch 已经执行了搜索
     }
     else {
-      await this.opSimilarity(text);
+      this.result = await this.opSimilarity(text);
     }
 
     await this.textOperator.execute(text);
+
+    return this.result;
   }
 }
 
@@ -640,7 +649,7 @@ export class ComputerExecutor {
 
   async executeAudio(audioData: Buffer) {
     if (!this.flagInitSuccess) {
-      console.error('未初始化');
+      console.error('未初始化，请检查输入key。');
       return;
     }
     // debug 
@@ -648,11 +657,14 @@ export class ComputerExecutor {
     // await fs.promises.writeFile(audioPath, audioData);
 
     // 语音识别
-    const result = await this.siliconflow.speechWavToText(audioData);
-    console.log('result', result);
+    const textResult = await this.siliconflow.speechWavToText(audioData);
 
     // 判断需求并执行
-    await this.reasoner.reason(result);
+    const reasonResult = await this.reasoner.reason(textResult);
+
+    const result = `${textResult}\n${reasonResult}`;
+    console.log(result);
+    return result;
   }
 
   async executeText(text: string) {

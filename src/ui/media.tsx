@@ -104,9 +104,9 @@ export class AudioRecorder {
         const wavBuffer = await MediaUtils.webm2wav(audioBlobWebm, WAV_SAMPLE_RATE, WAV_BITS_PER_SAMPLE, WAV_CHANNELS);
           
         // 传输给后端
-        console.log('音频大小:', wavBuffer.length, '字节');
+        // console.log('音频大小:', wavBuffer.length, '字节');
         const result = await window.electron.sendAudioData(wavBuffer);
-        console.log('音频传输结果:', result);
+        console.log(result);
 
         const audioUrl = URL.createObjectURL(audioBlobWebm);
         resolve(audioUrl);
@@ -147,7 +147,7 @@ export const AudioRecorderComponent = () => {
       window.electron.ipcRenderer.removeListener('startRecording', startRecordingListener);
       window.electron.ipcRenderer.removeListener('stopRecording', stopRecordingListener);
     };
-  }, []); // 空依赖数组，确保效果只运行一次
+  }, []);
 
 
   const startRecording = async () => {

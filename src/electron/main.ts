@@ -69,18 +69,21 @@ app.on('ready', async () =>  {
   computerExecutor.init();
 
   // 接受前端发送的音频数据
-  ipcMain.handle('sendAudio', async (event, audioData: Buffer) => {
+  ipcMainHandle('sendAudio', async (event, audioData: Buffer) => {
     try {
       const result = await computerExecutor.executeAudio(audioData);
 
-      return { success: true };
+      // 结果发送前端
+      console.log('send log');
+      mainWindow.webContents.send('log', result);
+      return result || '';
     } catch(err: any) {
-      return { success: false, error: err.message };
+      return '运行错误';
     }
   });
 
   // 接受前端发送的文本数据
-  ipcMain.handle('sendText', async (event, payload: { type: string, text: string }) => {
+  ipcMainHandle('sendText', async (event, payload: { type: string, text: string }) => {
     const { type, text } = payload;
     console.log('sendText', type, text);
     
@@ -88,7 +91,8 @@ app.on('ready', async () =>  {
       // 根据不同的类型处理文本
       switch (type) {
         case sendTextType.siliconflowKey:
-          return await computerExecutor.initSiliconflowKey(text);
+          await computerExecutor.initSiliconflowKey(text);
+          return 'success';
         case sendTextType.getSiliconflowBalance:
           return await computerExecutor.getSiliconflowBalance();
         case sendTextType.getSiliconflowKey:

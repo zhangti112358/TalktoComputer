@@ -15,9 +15,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Search } from "lucide-react"; // 可选的搜索图标
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch"; // 确保导入Switch组件
+import { Label } from "@/components/ui/label"; // 确保导入Label组件
 import {
   useReactTable,
   getCoreRowModel,
@@ -27,7 +28,7 @@ import {
 } from '@tanstack/react-table';
 
 import { useGlobalState } from './globalState';
-import { ShortcutCommand, ShortcutCommandType } from '../electron/computer/define';
+import { ShortcutCommand, ShortcutCommandType, TextAutoProcess } from '../electron/computer/define';
 
 // 通用的表格项接口
 export interface EditableItem {
@@ -234,7 +235,79 @@ export function EditableTable<T extends EditableItem>({
 
 export function AppShortcut() {
 
-  // 数据管理
+  // 文本操作
+  const { textAutoProcess, setTextAutoProcess } = useGlobalState();
+
+  // 处理自动复制开关状态变化
+  const handleAutoCopyChange = (checked: boolean) => {
+    if (!checked) {
+      // 如果关闭自动复制，则同时关闭自动粘贴和自动回车
+      setTextAutoProcess({
+        ...textAutoProcess,
+        autoCopyFlag: false,
+        autoPasteFlag: false,
+        autoEnterFlag: false,
+      });
+    } else {
+      // 仅开启自动复制
+      setTextAutoProcess({
+        ...textAutoProcess,
+        autoCopyFlag: true,
+      });
+    }
+  };
+
+  // 处理自动粘贴开关状态变化
+  const handleAutoPasteChange = (checked: boolean) => {
+    if (checked) {
+      // 如果开启自动粘贴，则同时开启自动复制
+      setTextAutoProcess({
+        ...textAutoProcess,
+        autoCopyFlag: true,
+        autoPasteFlag: true,
+      });
+    } else {
+      // 如果关闭自动粘贴，则同时关闭自动回车
+      setTextAutoProcess({
+        ...textAutoProcess,
+        autoPasteFlag: false,
+        autoEnterFlag: false,
+      });
+    }
+  };
+
+  // 处理自动回车开关状态变化
+  const handleAutoEnterChange = (checked: boolean) => {
+    if (checked) {
+      // 如果开启自动回车，则同时开启自动复制和自动粘贴
+      setTextAutoProcess({
+        ...textAutoProcess,
+        autoCopyFlag: true,
+        autoPasteFlag: true,
+        autoEnterFlag: true,
+      });
+    } else {
+      // 仅关闭自动回车
+      setTextAutoProcess({
+        ...textAutoProcess,
+        autoEnterFlag: false,
+      });
+    }
+  };
+
+  // 每次文本处理设置变化时保存到后端
+  let textAutoProcessPrev = textAutoProcess;
+  useEffect(() => {
+    // 避免每次渲染重复发送
+    if (textAutoProcessPrev === textAutoProcess) {
+      return;
+    }
+    textAutoProcessPrev = textAutoProcess;
+    window.electron.sendTextData('updateTextAutoProcess', JSON.stringify(textAutoProcess));
+    console.log("文本处理设置已更新", textAutoProcess);
+  }, [textAutoProcess]);
+
+  // 快捷指令数据
   const { shortcutCommandList, setShortcutCommandList } = useGlobalState();
   
   // 按类型分类数据
@@ -255,80 +328,74 @@ export function AppShortcut() {
   };
 
   // 每次总数据变化时保存
+  let shortcutCommandListPrev = shortcutCommandList;
   useEffect(() => {
+    // 避免每次渲染重复发送
+    if (shortcutCommandListPrev === shortcutCommandList) {
+      return;
+    }
+    shortcutCommandListPrev = shortcutCommandList;
     window.electron.sendTextData('updateShortcutCommand', JSON.stringify(shortcutCommandList));
     console.log("所有数据已更新");
-    // 在这里添加将数据保存到后台/JSON文件的逻辑
   }, [shortcutCommandList]);
-
-/*
-使用 shadcn ui 组件库的 card 和 button 组件，
-展示 一个搜索的card
-必应
-谷歌
-知乎
-哔哩哔哩
-小红书
-这六个名字
-*/
-  const [searchQuery, setSearchQuery] = useState("");
-  // 搜索引擎列表
-  const searchEngines = [
-    { name: "搜索", icon: "🔍", url: "" },
-    { name: "必应", icon: "🔎", url: "https://www.bing.com/search?q=" },
-    { name: "谷歌", icon: "🌐", url: "https://www.google.com/search?q=" },
-    { name: "知乎", icon: "❓", url: "https://www.zhihu.com/search?q=" },
-    { name: "哔哩哔哩", icon: "📺", url: "https://search.bilibili.com/all?keyword=" },
-    { name: "小红书", icon: "📕", url: "https://www.xiaohongshu.com/search_result?keyword=" }
-  ];
-  
-  const handleSearch = (engine: string) => {
-    if (!searchQuery.trim()) return;
-    
-    const selectedEngine = searchEngines.find(e => e.name === engine);
-    if (selectedEngine && selectedEngine.url) {
-      window.open(selectedEngine.url + encodeURIComponent(searchQuery), "_blank");
-    }
-  };
 
   return (
     <div className="space-y-8">
-    {/* 搜索卡片 */}
+    {/* 文字处理卡片 */}
     <Card className="w-full">
       <CardHeader>
-        <CardTitle>快捷搜索</CardTitle>
-        <CardDescription>选择搜索引擎快速查找内容</CardDescription>
+        <CardTitle>文字</CardTitle>
+        <CardDescription>自动文本处理选项</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="flex items-center space-x-2">
-          <div className="relative flex-1">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="text"
-              placeholder="输入搜索内容..."
-              className="pl-8"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') handleSearch("必应"); // 默认使用必应搜索
-              }}
+        <div className="flex flex-wrap gap-8 justify-center">
+          <div className="flex items-center space-x-2">
+            <Switch 
+              id="auto-copy" 
+              checked={textAutoProcess.autoCopyFlag}
+              onCheckedChange={handleAutoCopyChange}
+              className="data-[state=checked]:bg-green-500"
             />
+            <Label htmlFor="auto-copy">自动复制</Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Switch 
+              id="auto-paste" 
+              checked={textAutoProcess.autoPasteFlag}
+              onCheckedChange={handleAutoPasteChange}
+              className="data-[state=checked]:bg-green-500"
+            />
+            <Label htmlFor="auto-paste">自动粘贴</Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Switch 
+              id="auto-enter" 
+              checked={textAutoProcess.autoEnterFlag}
+              onCheckedChange={handleAutoEnterChange}
+              className="data-[state=checked]:bg-green-500"
+            />
+            <Label htmlFor="auto-enter">自动回车</Label>
           </div>
         </div>
       </CardContent>
-      <CardFooter className="flex flex-wrap gap-2">
-        {searchEngines.map((engine) => (
-          <Button
-            key={engine.name}
-            variant={engine.name === "搜索" ? "default" : "outline"}
-            size="sm"
-            onClick={() => handleSearch(engine.name)}
-            disabled={engine.name === "搜索" || !searchQuery.trim()}
-          >
-            <span className="mr-1">{engine.icon}</span> {engine.name}
-          </Button>
-        ))}
-      </CardFooter>
+    </Card>
+
+    {/* 搜索卡片*/}
+    <Card className="w-full">
+      <CardHeader>
+        <CardTitle>搜索</CardTitle>
+        <CardDescription>使用方式：“xx搜索+内容”</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="flex flex-wrap gap-2 justify-center">
+          {/* 使用 div 而不是 Button，只展示文本 */}
+          <div className="px-3 py-1 text-sm border rounded-md">必应</div>
+          <div className="px-3 py-1 text-sm border rounded-md">谷歌</div>
+          <div className="px-3 py-1 text-sm border rounded-md">知乎</div>
+          <div className="px-3 py-1 text-sm border rounded-md">哔哩哔哩</div>
+          <div className="px-3 py-1 text-sm border rounded-md">小红书</div>
+        </div>
+      </CardContent>
     </Card>
 
       {/* 网页链接表格 */}

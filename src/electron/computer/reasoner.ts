@@ -9,7 +9,7 @@ import { exec, spawn } from 'child_process';
 import robot from 'robotjs';
 import { clipboard } from 'electron';
 
-import { FilePath, UserFileUtil, ShortcutCommandType, ShortcutCommand } from './define.js';
+import { FilePath, UserFileUtil, ShortcutCommandType, ShortcutCommand, TextAutoProcess } from './define.js';
 import { SiliconFlow } from './siliconflow.js';
 
 // 模拟键盘操作
@@ -324,6 +324,12 @@ class TextOprator {
   flagPaste: boolean = false;
   flagEnter: boolean = false;
 
+  init(textAutoProcess: TextAutoProcess) {
+    this.flagCopy = textAutoProcess.autoCopyFlag;
+    this.flagPaste = textAutoProcess.autoPasteFlag;
+    this.flagEnter = textAutoProcess.autoEnterFlag;
+  }
+
   async execute(text: string) {
     if (this.flagCopy){
       clipboard.writeText(text);
@@ -362,6 +368,7 @@ export class ShortcutCommandUtil {
       { name: '玩GTA5',         type: ShortcutCommandType.steam, value: '271590', embedding: [] },
       { name: '玩蔚蓝',         type: ShortcutCommandType.steam, value: '504230', embedding: [] },
       { name: '玩黑神话悟空',    type: ShortcutCommandType.steam, value: '2358720', embedding: [] },
+      { name: '玩动物井',       type: ShortcutCommandType.steam, value: '813230', embedding: [] },
     ];
     return commandList;
   }
@@ -592,6 +599,21 @@ export class ComputerExecutor {
     // 获取快捷指令
     let commandList = ShortcutCommandUtil.getCommandList();
     return JSON.stringify(commandList);
+  }
+
+  async updateTextAutoProcess(text: string) {
+    // 更新文字自动处理
+    try {
+      let textAutoProcess:TextAutoProcess = JSON.parse(text);
+      this.reasoner.textOperator.init(textAutoProcess);
+      // TODO
+    }
+    catch (error) {
+      console.error('更新文字自动处理失败:', error);
+      return '更新文字自动处理失败';
+    }
+
+    return '更新成功';
   }
 
   async init() {

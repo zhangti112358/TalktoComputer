@@ -20,6 +20,7 @@ export enum sendTextType {
   getSiliconflowKey = 'getSiliconflowKey',
   getShortcutCommand = 'getShortcutCommand',
   updateShortcutCommand = 'updateShortcutCommand',
+  updateTextAutoProcess = 'updateTextAutoProcess',
 }
 
 
@@ -40,6 +41,13 @@ export interface ShortcutCommand {
   type: ShortcutCommandType;
   value: string;
   embedding: number[];
+}
+
+// 对文本的默认处理
+export interface TextAutoProcess {
+  autoCopyFlag: boolean;
+  autoPasteFlag: boolean;
+  autoEnterFlag: boolean;
 }
 
 // 程序使用的文件路径

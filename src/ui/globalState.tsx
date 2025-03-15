@@ -1,6 +1,6 @@
 /* 全局状态 */
 import React, { createContext, useState, useEffect, useRef, useReducer, useContext, ReactNode } from 'react';
-import { sendTextType, ShortcutCommand, ShortcutCommandType } from '@/electron/computer/define';
+import { sendTextType, ShortcutCommand, TextAutoProcess } from '@/electron/computer/define';
 
 // 全局状态类型
 interface GlobalStateType {
@@ -22,6 +22,10 @@ interface GlobalStateType {
   // app shortcut
   shortcutCommandList: ShortcutCommand[];
   setShortcutCommandList: (shortcutCommand: ShortcutCommand[]) => void;
+
+  // 文字操作
+  textAutoProcess: TextAutoProcess;
+  setTextAutoProcess: (textAutoProcess: TextAutoProcess) => void;
 };
 
 // 创建全局状态上下文
@@ -41,6 +45,15 @@ export const GlobalStateProvider = ({ children }: {children:ReactNode}) => {
 
   // app shortcut
   const [shortcutCommandList, setShortcutCommandList] = useState<ShortcutCommand[]>([]);
+  
+  // 文字操作
+  const defaultTextAutoProcess: TextAutoProcess = {
+    autoCopyFlag: true,
+    autoPasteFlag: false,
+    autoEnterFlag: false,
+  };
+  const [textAutoProcess, setTextAutoProcess] = useState<TextAutoProcess>(defaultTextAutoProcess);
+
 
   // 使用 useEffect 在组件初始化时获取数据
   useEffect(() => {
@@ -59,6 +72,9 @@ export const GlobalStateProvider = ({ children }: {children:ReactNode}) => {
             setBalance(initialBalance);
           }
         }
+
+        // 更新文字处理方式
+        await window.electron.sendTextData(sendTextType.updateTextAutoProcess, JSON.stringify(textAutoProcess));
 
         // 获取快捷指令列表
         const initialShortcutCommandList = await window.electron.sendTextData(sendTextType.getShortcutCommand, '');
@@ -85,6 +101,8 @@ export const GlobalStateProvider = ({ children }: {children:ReactNode}) => {
     setBalance,
     shortcutCommandList,
     setShortcutCommandList,
+    textAutoProcess,
+    setTextAutoProcess,
   };
 
   return (

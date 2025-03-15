@@ -11,7 +11,6 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -28,7 +27,7 @@ import {
 } from '@tanstack/react-table';
 
 import { useGlobalState } from './globalState';
-import { ShortcutCommand, ShortcutCommandType, TextAutoProcess } from '../electron/computer/define';
+import { ShortcutCommand, ShortcutCommandType } from '../electron/computer/define';
 
 // 通用的表格项接口
 export interface EditableItem {
@@ -77,7 +76,8 @@ export function EditableTable<T extends EditableItem>({
   const columnHelper = createColumnHelper<T>();
   
   const defaultColumns = [
-    columnHelper.accessor('name', {
+    columnHelper.accessor(row => row.name, {
+      id: 'name',
       header: () => <div className="text-center">{header_name}</div>,
       cell: ({ row, getValue }) => {
         const initialValue = getValue() as string;
@@ -112,7 +112,8 @@ export function EditableTable<T extends EditableItem>({
         );
       },
     }),
-    columnHelper.accessor('value', {
+    columnHelper.accessor(row => row.value, {
+      id: 'value',
       header: () => <div className="text-center">{header_value}</div>,
       cell: ({ row, getValue }) => {
         const initialValue = getValue() as string;

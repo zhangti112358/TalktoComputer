@@ -9,7 +9,8 @@ import { exec, spawn } from 'child_process';
 import robot from 'robotjs';
 import { clipboard } from 'electron';
 
-import { FilePath, UserFileUtil, ShortcutCommandType, ShortcutCommand, TextAutoProcess } from './define.js';
+import { ShortcutCommandType, ShortcutCommand, TextAutoProcess } from './define.js';
+import { FilePath, UserFileUtil, } from './defineElectron.js';
 import { SiliconFlow } from './siliconflow.js';
 
 // 模拟键盘操作

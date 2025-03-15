@@ -1,9 +1,9 @@
 import { Buffer } from 'buffer';
-import { getWaveBlob, WavRecorder } from "webm-to-wav-converter";
-import { useState, useEffect, useRef, useContext, createContext } from "react";
+import { getWaveBlob } from "webm-to-wav-converter";
+import { useState, useEffect, useRef } from "react";
 
 import { useGlobalState } from './globalState';
-import { WAV_SAMPLE_RATE, WAV_BITS_PER_SAMPLE, WAV_CHANNELS, sendTextType } from '@/electron/computer/define';
+import { WAV_SAMPLE_RATE, WAV_BITS_PER_SAMPLE, WAV_CHANNELS } from '@/electron/computer/define';
 
 // 音频处理工具类
 export class MediaUtils {
@@ -129,7 +129,15 @@ export const AudioRecorderComponent = () => {
   const [audioURL, setAudioURL] = useState<string | null>(null);
   const recorderRef = useRef<AudioRecorder>(new AudioRecorder());
 
+  const { hasInitializedRecoder } = useGlobalState();
+
   useEffect(() => {
+    // 防止重复初始化
+    if (hasInitializedRecoder.current) {
+      return;
+    }
+    hasInitializedRecoder.current = true;
+
     // 注册事件监听器
     const startRecordingListener = () => {
       startRecording();
@@ -180,25 +188,25 @@ export const AudioRecorderComponent = () => {
   }, [audioURL]);
 
   // 返回可视化录制音频的组件
-  function view() {
-    return (
-    <div>
-      <button onClick={recording ? stopRecording : startRecording}>
-        {recording ? "停止录音" : "开始录音"}
-      </button>
-      {audioURL && (
-        <div>
-          <audio controls>
-            <source src={audioURL} type="audio/webm" />
-            你的浏览器不支持音频播放
-          </audio>
-          <a href={audioURL} download="recording.webm">
-            下载音频
-          </a>
-        </div>
-      )}
-    </div>);
-  }
+  // function view() {
+  //   return (
+  //   <div>
+  //     <button onClick={recording ? stopRecording : startRecording}>
+  //       {recording ? "停止录音" : "开始录音"}
+  //     </button>
+  //     {audioURL && (
+  //       <div>
+  //         <audio controls>
+  //           <source src={audioURL} type="audio/webm" />
+  //           你的浏览器不支持音频播放
+  //         </audio>
+  //         <a href={audioURL} download="recording.webm">
+  //           下载音频
+  //         </a>
+  //       </div>
+  //     )}
+  //   </div>);
+  // }
 
   // 只有录音组件 无视图
   function noView() {

@@ -49,8 +49,7 @@ const ApiKeySection = () => {
     
     setLoading(true);
     try {
-      // 这里需要实现实际的余额获取逻辑
-      // 示例实现:
+      // 获取余额
       const balance = await window.electron.sendTextData(sendTextType.getSiliconflowBalance, '');
       setBalance(balance); // 模拟获取到的余额
     } catch (error) {

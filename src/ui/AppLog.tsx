@@ -5,7 +5,7 @@ import { useEffect, useRef } from 'react';
 import { useGlobalState } from './globalState';
 
 export function AppLog() {
-  const { logList, setLogList } = useGlobalState();
+  const { logList } = useGlobalState();
   const scrollRef = useRef<HTMLDivElement>(null);
   
   // 当日志列表更新时，自动滚动到顶部

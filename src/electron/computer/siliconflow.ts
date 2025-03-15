@@ -221,7 +221,7 @@ fetch('https://api.siliconflow.cn/v1/user/info', options)
 import * as fs from 'fs';
 import * as url from 'url';
 import * as path from 'path';
-import { UserFileUtil } from './define.js';
+import { UserFileUtil } from './defineElectron.js';
 
 const sleep = (ms: number): Promise<void> => {
   return new Promise(resolve => setTimeout(resolve, ms));

@@ -1,5 +1,5 @@
 /* 全局状态 */
-import React, { createContext, useState, useEffect, useRef, useReducer, useContext, ReactNode } from 'react';
+import React, { createContext, useState, useEffect, useRef, useContext, ReactNode } from 'react';
 import { sendTextType, ShortcutCommand, TextAutoProcess } from '@/electron/computer/define';
 
 // 全局状态类型
@@ -8,6 +8,7 @@ interface GlobalStateType {
   // 音频录制
   recording: boolean;
   setRecording: (recording: boolean) => void;
+  hasInitializedRecoder: React.MutableRefObject<boolean>;
 
   // 主界面
   activeApp: string | null;
@@ -39,6 +40,7 @@ export const GlobalStateContext = createContext<GlobalStateType | undefined>(und
 export const GlobalStateProvider = ({ children }: {children:ReactNode}) => {
   // 音频录制状态
   const [recording, setRecording] = useState(false);
+  const hasInitializedRecoder = useRef(false);
 
   // 主界面状态
   const [activeApp, setActiveApp] = useState<string | null>(null);
@@ -121,6 +123,7 @@ export const GlobalStateProvider = ({ children }: {children:ReactNode}) => {
   const value = {
     recording,
     setRecording,
+    hasInitializedRecoder,
     activeApp,
     setActiveApp,
     apiKey,

@@ -1,7 +1,8 @@
 {
   "name": "talktocomputer",
   "private": true,
-  "version": "0.0.0",
+  "version": "25.3.12",
+  "author": "zhangti",
   "type": "module",
   "main": "dist-electron/main.js",
   "scripts": {
@@ -51,7 +52,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",
-    "@types/node": "^22.12.0",
+    "@types/node": "^22.13.10",
     "@types/os-utils": "^0.0.4",
     "@types/react": "^18.3.18",
     "@types/react-dom": "^18.3.5",
@@ -69,6 +70,8 @@
     "tailwindcss": "^3.4.17",
     "typescript": "~5.6.2",
     "typescript-eslint": "^8.18.2",
-    "vite": "^6.0.5"
+    "vite": "^6.0.5",
+    "vite-plugin-electron": "^0.29.0",
+    "vite-plugin-electron-renderer": "^0.14.6"
   }
 }

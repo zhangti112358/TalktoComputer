@@ -1,8 +1,6 @@
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState } from 'react'
 import './App.css'
-import { Button } from "@/components/ui/button"
 import { Home, Star, MessageSquare } from "lucide-react"; // 图标库
-
 import { BACKGROUND_IMG, NAV_HEIGHT } from './Common.tsx';
 import { useGlobalState, GlobalStateProvider } from './globalState';
 

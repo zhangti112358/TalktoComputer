@@ -1,4 +1,4 @@
-import { app, BrowserWindow, globalShortcut, ipcMain, systemPreferences } from 'electron';
+import { app, BrowserWindow, globalShortcut, ipcMain, systemPreferences, Menu } from 'electron';
 import { GlobalKeyboardListener } from "node-global-key-listener";
 import { execSync } from 'child_process';
 import fs from 'fs';
@@ -7,7 +7,7 @@ import path from 'path';
 import { ipcMainHandle, isDev, portDev } from './util.js'
 import { getPreloadPath, getUIPath } from './pathResolver.js';
 import { pollResources, getStaticData } from './resourceManager.js';
-import { ContextReasoner, ComputerExecutor } from './computer/reasoner.js';
+import { ContextReasoner, ComputerExecutor, ShortcutCommandUtil } from './computer/reasoner.js';
 
 import { VOICE_INPUT_SHORTCUT, sendTextType } from './computer/define.js';
 
@@ -17,12 +17,19 @@ const hasMicrophonePermission = systemPreferences.getMediaAccessStatus('micropho
 
 app.on('ready', async () =>  {
   const mainWindow = new BrowserWindow({
+    autoHideMenuBar: true,
     webPreferences: {
       preload: getPreloadPath(),
     }
   });
 
+  Menu.setApplicationMenu(null);  // 设置菜单栏 为空
+
   // console.log('hasMicrophonePermission', hasMicrophonePermission);
+
+  // 加载UI之前的操作
+  ShortcutCommandUtil.init();
+
 
   if (isDev()){
     // 区分开发过程，实时加载代码修改

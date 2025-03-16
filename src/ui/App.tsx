@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import './App.css'
 import { Home, Star, MessageSquare } from "lucide-react"; // 图标库
-import { BACKGROUND_IMG, NAV_HEIGHT } from './Common.tsx';
+import { BACKGROUND_IMG, PANDA_FRONT_IMG, PANDA_BACK_IMG, NAV_HEIGHT } from './Common.tsx';
 import { useGlobalState, GlobalStateProvider } from './globalState';
 
 // apps
@@ -19,7 +19,7 @@ export function AppDefault() {
 
   // 控制翻转动画的状态
   const [isFlipping, setIsFlipping] = useState(false);
-  const [displayedImage, setDisplayedImage] = useState(recording ? "./data/panda_front.JPG" : "./data/panda_back.JPG");
+  const [displayedImage, setDisplayedImage] = useState(recording ? `url(${PANDA_FRONT_IMG})` : `url(${PANDA_BACK_IMG})`);
   
   // 监听recording状态变化，触发翻转动画
   useEffect(() => {
@@ -29,7 +29,7 @@ export function AppDefault() {
     setIsFlipping(true);
     // 在动画中途切换图片
     setTimeout(() => {
-      setDisplayedImage(recording ? "./data/panda_front.JPG" : "./data/panda_back.JPG");
+      setDisplayedImage(recording ? PANDA_FRONT_IMG : PANDA_BACK_IMG);
     }, 100); // 动画持续时间的一半
     
     // 动画结束后重置状态

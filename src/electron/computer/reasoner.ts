@@ -724,8 +724,17 @@ class ComputerTest {
 
 }
 
+// 安全地检查是否是直接运行此脚本
+function isDirectlyExecuted() {
+  try {
+    // pathToFileURL(process.argv[1]) 在npm运行正常 编译后引发报错 所以使用 try catch
+    return import.meta.url === url.pathToFileURL(process.argv[1]).href;
+  } catch (error) {
+    return false;
+  }
+}
  
-if (import.meta.url === url.pathToFileURL(process.argv[1]).href) {
+if (isDirectlyExecuted()) {
   // 测试
   await ComputerTest.testContextReasoner();
 }

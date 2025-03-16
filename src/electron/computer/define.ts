@@ -17,6 +17,7 @@ export enum sendTextType {
   getShortcutCommand = 'getShortcutCommand',
   updateShortcutCommand = 'updateShortcutCommand',
   updateTextAutoProcess = 'updateTextAutoProcess',
+  openUrl = 'openUrl',
 }
 
 

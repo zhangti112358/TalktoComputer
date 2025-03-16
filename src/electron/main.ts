@@ -18,6 +18,8 @@ const hasMicrophonePermission = systemPreferences.getMediaAccessStatus('micropho
 app.on('ready', async () =>  {
   const mainWindow = new BrowserWindow({
     autoHideMenuBar: true,
+    width: 1000,
+    height: 800,
     webPreferences: {
       preload: getPreloadPath(),
     }
@@ -110,6 +112,8 @@ app.on('ready', async () =>  {
           return await computerExecutor.getShortcutCommand();
         case sendTextType.updateTextAutoProcess:
           return await computerExecutor.updateTextAutoProcess(text);
+        case sendTextType.openUrl:
+          return await computerExecutor.openUrl(text);
         default:
           console.log('Unknown type', type);
           return 'error';
@@ -118,4 +122,12 @@ app.on('ready', async () =>  {
       return 'error';
     }
   });
+
+  mainWindow.on('closed', () => {
+    v.kill();
+    app.quit();
+  });
 });
+
+// 退出时关闭
+app.on('window-all-closed', () => app.quit());

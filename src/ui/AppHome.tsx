@@ -5,10 +5,11 @@ import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { RefreshCcw } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 
 
+import { NAV_HEIGHT } from './Common.tsx';
 import { sendTextType } from '@/electron/computer/define';
 import { useGlobalState } from './globalState';
 
@@ -60,11 +61,56 @@ const ApiKeySection = () => {
   };
 
   return (
+    <div className="space-y-8">
+    <Card className="mb-6">
+      <CardHeader>
+        <CardTitle className="text-center text-xl">开始说话吧 熊猫会帮你做一些事</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-6">
+          {/* 使用 */}
+          <div className="grid grid-cols-12 gap-4 border rounded-lg p-4">
+            <div className="col-span-2 font-bold flex items-center">
+              使用
+            </div>
+            <div className="col-span-9 text-left">
+              <p className="mb-2">1. 输入硅基流动平台的key</p>
+              <p className="mb-2">2. 点击熊猫右边的星星图标查看支持的功能</p>
+              <p className="mb-2">3. 按住键盘"F4"键开始说话</p>
+            </div>
+          </div>
+
+          {/* 查看项目 */}
+          <div className="grid grid-cols-12 gap-4 border rounded-lg p-4">
+            <div className="col-span-2 font-bold flex items-center">
+              查看项目
+            </div>
+            <div className="col-span-9 text-left">
+            <div className="flex items-center gap-2 mb-2">
+                <a 
+                  href="https://github.com/zhangti112358/TalktoComputer" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-blue-600 break-all select-all flex-1"
+                  onClick={(e) => {
+                    e.preventDefault(); // 阻止默认行为
+                    window.electron.sendTextData(sendTextType.openUrl, 'https://github.com/zhangti112358/TalktoComputer');
+                  }}
+                >
+                  https://github.com/zhangti112358/TalktoComputer
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+
     <Card className="mb-6">
       <CardContent className="pt-6">
         <div className="space-y-4">
           <div className="grid gap-2">
-            <Label htmlFor="apiKey">硅基流动 API Key</Label>
+            <Label htmlFor="apiKey" className="font-bold">硅基流动 秘钥</Label>
             <div className="flex gap-2">
               <Input 
                 id="apiKey"
@@ -97,46 +143,29 @@ const ApiKeySection = () => {
               <span className="text-sm text-muted-foreground">未获取余额</span>
             )}
           </div>
-
-          
-          {/* <div className="flex items-center gap-4 pt-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => window.open('https://cloud.siliconflow.cn/i/hyRgBGdj', '_blank')}
-              className="text-xs"
+          <div className="flex flex-col items-start gap-2 mb-2">
+            <span className="whitespace-nowrap">注册账号:（使用这个链接注册，我会获得2000W Tokens奖励。你可以使用朋友的链接或者分享链接给朋友。)</span>
+            <a 
+              href="https://cloud.siliconflow.cn/i/hyRgBGdj" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-blue-600 break-all select-all flex-1"
+              onClick={(e) => {
+                e.preventDefault(); // 阻止默认行为
+                window.electron.sendTextData(sendTextType.openUrl, 'https://cloud.siliconflow.cn/i/hyRgBGdj');
+              }}
             >
-              注册账号
-            </Button>
-          </div> */}
+              https://cloud.siliconflow.cn/i/hyRgBGdj
+            </a>
+          </div>
         </div>
       </CardContent>
     </Card>
+    </div>
   );
 };
 
-import { NAV_HEIGHT } from './Common.tsx';
 
-/*
-
-输入key（隐藏具体值） 刷新余额按钮 余额显示
-*/
-
-function Layout({ children }: { children: React.ReactNode }) {
-  return (
-    <SidebarProvider>
-      <AppSidebar 
-      style={{ 
-        height: `calc(100vh - ${NAV_HEIGHT})`,
-      }}
-      />
-      <main>
-        <SidebarTrigger />
-        {children}
-      </main>
-    </SidebarProvider>
-  )
-}
 
 export function AppHome() {
   // const [number1, setNumber1]     = useState(0);

@@ -626,6 +626,21 @@ export class ComputerExecutor {
     return '更新成功';
   }
 
+  async openUrl(url: string) {
+    // 打开网页
+    let result = '';
+    try {
+      const op = new ChromeUrlOperator('打开网页', url);
+      await op.execute();
+      result = '打开网页成功';
+    }
+    catch (error) {
+      console.error('打开网页失败:', error);
+      result = '打开网页失败';
+    }
+    return result;
+  }
+
   async init() {
     // 读取key
     let key = '';

@@ -346,7 +346,7 @@ export function AppShortcut() {
     <Card className="w-full">
       <CardHeader>
         <CardTitle>文字</CardTitle>
-        <CardDescription>自动文本处理选项</CardDescription>
+        <CardDescription>语音识别后的文字处理</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="flex flex-wrap gap-8 justify-center">

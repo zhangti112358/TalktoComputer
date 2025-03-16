@@ -74,7 +74,7 @@ const ApiKeySection = () => {
               使用
             </div>
             <div className="col-span-9 text-left">
-              <p className="mb-2">1. 输入硅基流动平台的key</p>
+              <p className="mb-2">1. 输入硅基流动平台的秘钥</p>
               <p className="mb-2">2. 点击熊猫右边的星星图标查看支持的功能</p>
               <p className="mb-2">3. 按住键盘"F4"键开始说话</p>
             </div>
@@ -83,7 +83,7 @@ const ApiKeySection = () => {
           {/* 查看项目 */}
           <div className="grid grid-cols-12 gap-4 border rounded-lg p-4">
             <div className="col-span-2 font-bold flex items-center">
-              查看项目
+              查看源码
             </div>
             <div className="col-span-9 text-left">
             <div className="flex items-center gap-2 mb-2">
@@ -106,6 +106,7 @@ const ApiKeySection = () => {
       </CardContent>
     </Card>
 
+    {/* 硅基流动秘钥 */}
     <Card className="mb-6">
       <CardContent className="pt-6">
         <div className="space-y-4">

@@ -1,4 +1,4 @@
-import { useState, useEffect, ReactNode } from 'react';
+import { useState, useEffect, ReactNode, useRef } from 'react';
 import {
   Table,
   TableBody,
@@ -297,13 +297,13 @@ export function AppShortcut() {
   };
 
   // 每次文本处理设置变化时保存到后端
-  let textAutoProcessPrev = textAutoProcess;
+  let textAutoProcessPrev = useRef(textAutoProcess);
   useEffect(() => {
     // 避免每次渲染重复发送
-    if (textAutoProcessPrev === textAutoProcess) {
+    if (textAutoProcessPrev.current === textAutoProcess) {
       return;
     }
-    textAutoProcessPrev = textAutoProcess;
+    textAutoProcessPrev.current = textAutoProcess;
     window.electron.sendTextData('updateTextAutoProcess', JSON.stringify(textAutoProcess));
     console.log("文本处理设置已更新", textAutoProcess);
   }, [textAutoProcess]);
@@ -329,15 +329,15 @@ export function AppShortcut() {
   };
 
   // 每次总数据变化时保存
-  let shortcutCommandListPrev = shortcutCommandList;
+  let shortcutCommandListPrev = useRef(shortcutCommandList);
   useEffect(() => {
     // 避免每次渲染重复发送
-    if (shortcutCommandListPrev === shortcutCommandList) {
+    if (shortcutCommandListPrev.current === shortcutCommandList) {
       return;
     }
-    shortcutCommandListPrev = shortcutCommandList;
+    shortcutCommandListPrev.current = shortcutCommandList;
     window.electron.sendTextData('updateShortcutCommand', JSON.stringify(shortcutCommandList));
-    console.log("所有数据已更新");
+    console.log("commandList已更新");
   }, [shortcutCommandList]);
 
   return (

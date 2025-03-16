@@ -22,9 +22,12 @@ class KerboardOperator {
      */
     static async copy(): Promise<boolean> {
       try {
-        robot.keyToggle('control', 'down');
-        robot.keyTap('c');
-        robot.keyToggle('control', 'up');
+        if (process.platform === 'win32' || process.platform === 'linux') {
+          robot.keyTap('c', ['control']);
+        }
+        else if (process.platform === 'darwin') {
+          robot.keyTap('c', ['command']);
+        }
         return true;
       } catch (error) {
         console.error('复制操作失败:', error);
@@ -38,9 +41,13 @@ class KerboardOperator {
      */
     static async paste(): Promise<boolean> {
       try {
-        robot.keyToggle('control', 'down');
-        robot.keyTap('v');
-        robot.keyToggle('control', 'up');
+        // win 和 mac
+        if (process.platform === 'win32' || process.platform === 'linux') {
+          robot.keyTap('v', ['control']);
+        }
+        else if (process.platform === 'darwin') {
+          robot.keyTap('v', ['command']);
+        }
         return true;
       } catch (error) {
         console.error('粘贴操作失败:', error);

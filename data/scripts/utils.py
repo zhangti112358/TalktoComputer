@@ -34,5 +34,5 @@ def create_rounded_image(image_path):
 
 if __name__ == '__main__':
     # 使用示例：
-    img = create_rounded_image('data/icon_panda.JPG')
-    img.save('data/icon_panda_rc.png')
+    img = create_rounded_image('public/image/panda_back.JPG')
+    img.save('public/image/panda_back_rc.png')

@@ -6,16 +6,16 @@
     "src/assets/**",
     "public/**/**"
   ],
-  "icon": "data/icon_panda_rc.png",
   "mac": {
     "target": "dmg",
-    "icon": "data/icon_panda_rc.png"
+    "icon": "public/image/panda_back_rc.png"
   },
   "linux": {
     "target": "AppImage",
     "category": "Utility"
   },
   "win": {
+    "icon": "public/image/panda_back.ico",
     "target": ["portable"]
   }
 }

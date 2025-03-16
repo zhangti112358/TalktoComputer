@@ -1,6 +1,7 @@
 让计算机听懂人话！
 
 # 使用示例
+<video src="doc/demo/demo_25.3.16.mp4" controls width="640" height="360"></video>
 
 # 运行
 

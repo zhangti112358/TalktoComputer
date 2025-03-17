@@ -1,7 +1,9 @@
 让计算机听懂人话！
 
 # 使用示例
-<video src="doc/demo/demo_25.3.16.mp4" controls width="640" height="360"></video>
+
+https://github.com/user-attachments/assets/bad6d1c5-40d6-422e-a263-2ac02db773fa
+
 
 # 运行
 

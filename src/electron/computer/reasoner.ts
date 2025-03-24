@@ -204,19 +204,19 @@ export class CommandOperator {
 }
 
 // 打开网页
-export class ChromeUrlOperator extends CommandOperator {
+export class UrlOperator extends CommandOperator {
   url: string;
   constructor(name: string, url: string) {
-    const cmd = ChromeUrlOperator.url2cmd(url);
+    const cmd = UrlOperator.url2cmd(url);
     super(name, cmd);
     this.url = url;
   }
 
   static url2cmd(url:string) {
     let cmd = '';
-    url = `"${url}"`; // 需要加引号 来支持带空格的url
     if (process.platform === 'win32') {
-      cmd = `start chrome ${url}`;
+      // cmd = `start chrome ${url}`;
+      cmd = `start ${url}`; // 默认浏览器
     } else if (process.platform === 'darwin') {
       cmd = `open ${url}`;
     } else if (process.platform === 'linux') {
@@ -236,17 +236,17 @@ export enum SearchEngine {
 }
 
 
-export class ChromeSearchOperator extends ChromeUrlOperator {
+export class SearchOperator extends UrlOperator {
   nameWithSearch: string; // eg: 必应搜索
   engine: SearchEngine;
   keyword: string;
   constructor(engine: SearchEngine, keyword?: string) {
-    let engineName = ChromeSearchOperator.engine2name(engine);
+    let engineName = SearchOperator.engine2name(engine);
     if (keyword === undefined) {
       keyword = '';
     }
     
-    let url = ChromeSearchOperator.keyword2url(engine, keyword);
+    let url = SearchOperator.keyword2url(engine, keyword);
 
     const name = engineName;
     super(name, url);
@@ -256,9 +256,9 @@ export class ChromeSearchOperator extends ChromeUrlOperator {
   }
 
   search(keyword: string) {
-    let url = ChromeSearchOperator.keyword2url(this.engine, keyword);
+    let url = SearchOperator.keyword2url(this.engine, keyword);
     this.url = url;
-    this.cmd = ChromeUrlOperator.url2cmd(url);
+    this.cmd = UrlOperator.url2cmd(url);
     return this.execute();
   }
 
@@ -284,6 +284,10 @@ export class ChromeSearchOperator extends ChromeUrlOperator {
 
   static keyword2url(engine: SearchEngine, keyword: string) {
     let url = '';
+
+    // 把空格替换成+号 否则搜索补全
+    keyword = keyword.replace(' ', '+');
+
     if (engine === SearchEngine.Bing) {
       url = `https://cn.bing.com/search?q=${keyword}`;
     }
@@ -414,7 +418,7 @@ export class ShortcutCommandUtil {
   static command2op(command: ShortcutCommand) {
     let op: CommandOperator = new CommandOperator('unkown', '');
     if (command.type === ShortcutCommandType.url) {
-      op = new ChromeUrlOperator(command.name, command.value);
+      op = new UrlOperator(command.name, command.value);
     }
     else if (command.type === ShortcutCommandType.steam) {
       op = new SteamAppOperator(command.name, parseInt(command.value));
@@ -450,7 +454,7 @@ export class ContextReasoner {
   similarityThreshold: number = 0;
 
   // 搜索引擎
-  opSearchList: ChromeSearchOperator[] = [];
+  opSearchList: SearchOperator[] = [];
 
   // 对文字进行操作
   textOperator: TextOprator = new TextOprator();
@@ -474,13 +478,13 @@ export class ContextReasoner {
 
     // 搜索
     this.opSearchList = [
-      new ChromeSearchOperator(SearchEngine.Bing),
-      new ChromeSearchOperator(SearchEngine.Google),
-      new ChromeSearchOperator(SearchEngine.Zhihu),
-      new ChromeSearchOperator(SearchEngine.Bilibili),
-      new ChromeSearchOperator(SearchEngine.Xiaohongshu),
+      new SearchOperator(SearchEngine.Bing),
+      new SearchOperator(SearchEngine.Google),
+      new SearchOperator(SearchEngine.Zhihu),
+      new SearchOperator(SearchEngine.Bilibili),
+      new SearchOperator(SearchEngine.Xiaohongshu),
     ];
-    const defaultSearchOperator = new ChromeSearchOperator(defaultSearchEngine);
+    const defaultSearchOperator = new SearchOperator(defaultSearchEngine);
     defaultSearchOperator.name = '';
     defaultSearchOperator.nameWithSearch = '搜索';
     this.opSearchList.push(defaultSearchOperator);
@@ -637,7 +641,7 @@ export class ComputerExecutor {
     // 打开网页
     let result = '';
     try {
-      const op = new ChromeUrlOperator('打开网页', url);
+      const op = new UrlOperator('打开网页', url);
       await op.execute();
       result = '打开网页成功';
     }
@@ -706,6 +710,16 @@ export class ComputerExecutor {
  * 用于测试 ContextReasoner 和 SentenceSimilarity 的功能
  */
 class ComputerTest {
+  static async testOperator() {
+    // 测试打开网页
+    let op = new UrlOperator('打开网页', 'https://cn.bing.com');
+    await op.execute();
+
+    // 测试搜索;
+    let opSearch = new SearchOperator(SearchEngine.Bing);
+    await opSearch.search('typescript javascript');
+  }
+
   /**
    * 测试上下文推理器功能
    */
@@ -755,8 +769,9 @@ function isDirectlyExecuted() {
     return false;
   }
 }
- 
+
 if (isDirectlyExecuted()) {
   // 测试
-  await ComputerTest.testContextReasoner();
+  await ComputerTest.testOperator();
+  // await ComputerTest.testContextReasoner();
 }

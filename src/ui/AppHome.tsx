@@ -22,27 +22,6 @@ const ApiKeySection = () => {
   const [loading, setLoading] = useState(false);
 
 
-  // api key变化
-  const handleApiKeyChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newApiKey = e.target.value;
-    setApiKey(newApiKey);
-  };
-
-  // 回车更新key
-  const hadleKeyDown = async (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      try {
-        // 调用保存 API Key 的函数
-        await window.electron.sendTextData(sendTextType.siliconflowKey, apiKey);
-        console.log('API Key 已保存');
-        // 保存成功后，获取余额
-        fetchBalance();
-      } catch (error) {
-        console.error('保存 API Key 失败:', error);
-      }
-    }
-  }
-
   const fetchBalance = async () => {
     if (!apiKey) {
       return;
@@ -59,6 +38,32 @@ const ApiKeySection = () => {
       setLoading(false);
     }
   };
+
+
+  const saveKeyFetchBalance = async () => {
+    try {
+      // 调用保存 API Key 的函数
+      await window.electron.sendTextData(sendTextType.siliconflowKey, apiKey);
+      console.log('API Key 已保存');
+      // 保存成功后，获取余额
+      fetchBalance();
+    } catch (error) {
+      console.error('保存 API Key 失败:', error);
+    }
+  }
+
+  // api key变化
+  const handleApiKeyChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newApiKey = e.target.value;
+    setApiKey(newApiKey);
+  };
+
+  // 回车更新key
+  const hadleKeyDown = async (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      await saveKeyFetchBalance();
+    }
+  }
 
   return (
     <div className="space-y-8">
@@ -119,6 +124,7 @@ const ApiKeySection = () => {
                 value={apiKey}
                 onChange={(e) => handleApiKeyChange(e)}
                 onKeyDown={(e) => hadleKeyDown(e)}
+                onBlur={() => saveKeyFetchBalance()}
                 placeholder="输入您的 Key 然后按回车"
                 className="flex-1"
               />

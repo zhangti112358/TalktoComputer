@@ -23,9 +23,6 @@ const ApiKeySection = () => {
 
 
   const fetchBalance = async () => {
-    if (!apiKey) {
-      return;
-    }
     
     setLoading(true);
     try {
@@ -40,10 +37,10 @@ const ApiKeySection = () => {
   };
 
 
-  const saveKeyFetchBalance = async () => {
+  const saveKeyFetchBalance = async (key:string) => {
     try {
       // 调用保存 API Key 的函数
-      await window.electron.sendTextData(sendTextType.siliconflowKey, apiKey);
+      await window.electron.sendTextData(sendTextType.siliconflowKey, key);
       console.log('API Key 已保存');
       // 保存成功后，获取余额
       fetchBalance();
@@ -56,14 +53,8 @@ const ApiKeySection = () => {
   const handleApiKeyChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const newApiKey = e.target.value;
     setApiKey(newApiKey);
+    await saveKeyFetchBalance(newApiKey); // react 不会直接更新apiKey 下次渲染才会更新 所以这里直接使用newApiKey
   };
-
-  // 回车更新key
-  const hadleKeyDown = async (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      await saveKeyFetchBalance();
-    }
-  }
 
   return (
     <div className="space-y-8">
@@ -123,9 +114,7 @@ const ApiKeySection = () => {
                 type="password" 
                 value={apiKey}
                 onChange={(e) => handleApiKeyChange(e)}
-                onKeyDown={(e) => hadleKeyDown(e)}
-                onBlur={() => saveKeyFetchBalance()}
-                placeholder="输入您的 Key 然后按回车"
+                placeholder="输入秘钥"
                 className="flex-1"
               />
               <Button 

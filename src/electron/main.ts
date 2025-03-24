@@ -25,7 +25,6 @@ app.on('ready', async () =>  {
     }
   });
 
-  Menu.setApplicationMenu(null);  // 设置菜单栏 为空
 
   // console.log('hasMicrophonePermission', hasMicrophonePermission);
 
@@ -40,6 +39,7 @@ app.on('ready', async () =>  {
   }
   else {
     // 加载UI 一个html页面
+    Menu.setApplicationMenu(null);  // 设置菜单栏 为空
     mainWindow.loadFile(getUIPath());
   }
 

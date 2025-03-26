@@ -5,12 +5,13 @@ import * as url from 'url';
 import * as math from 'mathjs';
 import * as path from 'path';
 import * as fs from 'fs';
+import * as os from 'os';
 import { exec, spawn } from 'child_process';
 import robot from 'robotjs';
 import { clipboard } from 'electron';
 
 import { ShortcutCommandType, ShortcutCommand, TextAutoProcess } from './define.js';
-import { FilePath, UserFileUtil, } from './defineElectron.js';
+import { FilePath, UserFileUtil, SystemPathUtil } from './defineElectron.js';
 import { SiliconFlow } from './siliconflow.js';
 
 // 模拟键盘操作
@@ -203,6 +204,28 @@ export class CommandOperator {
   }
 }
 
+// 打开文件/文件夹/程序
+export class FileOperator extends CommandOperator {
+  filePath: string;
+  constructor(name: string, filePath: string) {
+    const cmd = FileOperator.filePath2cmd(filePath);
+    super(name, cmd);
+    this.filePath = filePath;
+  }
+
+  static filePath2cmd(filePath: string) {
+    let cmd = '';
+    if (process.platform === 'win32') {
+      cmd = `start "" "${filePath}"`; // 使用引号包裹路径，避免空格问题
+    } else if (process.platform === 'darwin') {
+      cmd = `open "${filePath}"`;
+    } else if (process.platform === 'linux') {
+      cmd = `xdg-open "${filePath}"`;  // Linux 上通用的打开文件方式
+    }
+    return cmd;
+  }
+}
+
 // 打开网页
 export class UrlOperator extends CommandOperator {
   url: string;
@@ -360,6 +383,11 @@ class TextOprator {
 export class ShortcutCommandUtil {
   static getDefaultCommandList(){
     let commandList:ShortcutCommand[] = [
+      // 文件
+      { name: '打开我的文档',         type: ShortcutCommandType.path, value: SystemPathUtil.getDocumentsPath(), embedding: [] },
+      { name: '打开下载文件夹',       type: ShortcutCommandType.path, value: SystemPathUtil.getDownloadsPath(), embedding: [] },
+      { name: '打开桌面文件夹',       type: ShortcutCommandType.path, value: SystemPathUtil.getDesktopPath(), embedding: [] },
+
       // 网页
       { name: '必应',         type: ShortcutCommandType.url, value: 'https://cn.bing.com', embedding: [] },
       { name: '谷歌',         type: ShortcutCommandType.url, value: 'https://www.google.com', embedding: [] },
@@ -422,6 +450,12 @@ export class ShortcutCommandUtil {
     }
     else if (command.type === ShortcutCommandType.steam) {
       op = new SteamAppOperator(command.name, parseInt(command.value));
+    }
+    else if (command.type === ShortcutCommandType.path) {
+      op = new FileOperator(command.name, command.value);
+    }
+    else {
+      console.error('未知的快捷指令类型:', command.type);
     }
     return op;
   }
@@ -711,13 +745,19 @@ export class ComputerExecutor {
  */
 class ComputerTest {
   static async testOperator() {
-    // 测试打开网页
-    let op = new UrlOperator('打开网页', 'https://cn.bing.com');
-    await op.execute();
+    // 文件
+    let opFile = new FileOperator('打开文件', 'C:\\Windows\\System32\\notepad.exe');
+    // opFile.execute();
+    opFile = new FileOperator('打开文件', SystemPathUtil.getDocumentsPath());
+    opFile.execute();
 
-    // 测试搜索;
-    let opSearch = new SearchOperator(SearchEngine.Bing);
-    await opSearch.search('typescript javascript');
+    // // 测试打开网页
+    // let op = new UrlOperator('打开网页', 'https://cn.bing.com');
+    // await op.execute();
+
+    // // 测试搜索;
+    // let opSearch = new SearchOperator(SearchEngine.Bing);
+    // await opSearch.search('typescript javascript');
   }
 
   /**

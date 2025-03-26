@@ -4,7 +4,21 @@ import fs from 'fs';
 
 import { APP_NAME, ShortcutCommand } from './define.js';
 
-// 程序使用的文件路径
+// 电脑系统路径
+export class SystemPathUtil {
+  static getDocumentsPath() {
+    return path.join(os.homedir(), 'Documents');
+  }
+  static getDesktopPath() {
+    return path.join(os.homedir(), 'Desktop');
+  }
+  static getDownloadsPath() {
+    return path.join(os.homedir(), 'Downloads');
+  }
+}
+
+
+// 此程序使用的文件路径
 export class FilePath {
 
     // 文档路径

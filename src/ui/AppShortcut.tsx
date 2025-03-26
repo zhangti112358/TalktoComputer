@@ -25,6 +25,7 @@ import {
   createColumnHelper,
   ColumnDef,
 } from '@tanstack/react-table';
+import { isEqual } from 'lodash';
 
 import { useGlobalState } from './globalState';
 import { ShortcutCommand, ShortcutCommandType } from '../electron/computer/define';
@@ -312,27 +313,39 @@ export function AppShortcut() {
   const { shortcutCommandList, setShortcutCommandList } = useGlobalState();
   
   // 按类型分类数据
+  const pathCommandList = shortcutCommandList.filter(cmd => cmd.type === ShortcutCommandType.path);
   const urlCommandList = shortcutCommandList.filter(cmd => cmd.type === ShortcutCommandType.url);
   const steamCommandList = shortcutCommandList.filter(cmd => cmd.type === ShortcutCommandType.steam);
 
+  // 处理文件数据更新
+  const handlePathDataChange = (newPathCommands: ShortcutCommand[]) => {
+    const pathCommandList = shortcutCommandList.filter(cmd => cmd.type === ShortcutCommandType.path);
+    const urlCommandList = shortcutCommandList.filter(cmd => cmd.type === ShortcutCommandType.url);
+    const steamCommandList = shortcutCommandList.filter(cmd => cmd.type === ShortcutCommandType.steam);
+    setShortcutCommandList([...newPathCommands, ...urlCommandList, ...steamCommandList]);
+  };
 
   // 处理网页数据更新
   const handleUrlDataChange = (newUrlCommands: ShortcutCommand[]) => {
-    const otherCommands = shortcutCommandList.filter(cmd => cmd.type !== ShortcutCommandType.url);
-    setShortcutCommandList([...newUrlCommands, ...otherCommands]);
+    const pathCommandList = shortcutCommandList.filter(cmd => cmd.type === ShortcutCommandType.path);
+    const urlCommandList = shortcutCommandList.filter(cmd => cmd.type === ShortcutCommandType.url);
+    const steamCommandList = shortcutCommandList.filter(cmd => cmd.type === ShortcutCommandType.steam);
+    setShortcutCommandList([...pathCommandList, ...newUrlCommands, ...steamCommandList]);
   };
 
   // 处理游戏数据更新
   const handleSteamDataChange = (newSteamCommands: ShortcutCommand[]) => {
-    const otherCommands = shortcutCommandList.filter(cmd => cmd.type !== ShortcutCommandType.steam);
-    setShortcutCommandList([...newSteamCommands, ...otherCommands]);
+    const pathCommandList = shortcutCommandList.filter(cmd => cmd.type === ShortcutCommandType.path);
+    const urlCommandList = shortcutCommandList.filter(cmd => cmd.type === ShortcutCommandType.url);
+    const steamCommandList = shortcutCommandList.filter(cmd => cmd.type === ShortcutCommandType.steam);
+    setShortcutCommandList([...pathCommandList, ...urlCommandList, ...newSteamCommands]);
   };
 
   // 每次总数据变化时保存
   let shortcutCommandListPrev = useRef(shortcutCommandList);
   useEffect(() => {
     // 避免每次渲染重复发送
-    if (shortcutCommandListPrev.current === shortcutCommandList) {
+    if (isEqual(shortcutCommandListPrev.current, shortcutCommandList)) {
       return;
     }
     shortcutCommandListPrev.current = shortcutCommandList;
@@ -398,6 +411,16 @@ export function AppShortcut() {
         </div>
       </CardContent>
     </Card>
+
+      {/* 文件表格 */}
+      <EditableTable
+        data={pathCommandList}
+        onChange={handlePathDataChange}
+        createNewRow={() => ({ type: ShortcutCommandType.path, name: "", value: "", embedding: [] })}
+        title="文件/文件夹/程序"
+        header_name="名字"
+        header_value="路径"
+      />
 
       {/* 网页链接表格 */}
       <EditableTable

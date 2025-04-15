@@ -439,7 +439,7 @@ export function AppShortcut() {
         createNewRow={() => ({ type: ShortcutCommandType.steam, name: "", value: "", embedding: [] })}
         title="Steam"
         header_name="名字"
-        header_value="游戏ID"
+        header_value="ID（steam页面app后的数字，比如https://store.steampowered.com/app/620/Portal_2/"
       />
     </div>
   );

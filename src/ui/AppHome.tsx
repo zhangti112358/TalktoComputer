@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 
 
 import { NAV_HEIGHT } from './Common.tsx';
-import { sendTextType } from '@/electron/computer/define';
+import { sendTextType, VOICE_INPUT_SHORTCUT } from '@/electron/computer/define';
 import { useGlobalState } from './globalState';
 
 
@@ -72,7 +72,7 @@ const ApiKeySection = () => {
             <div className="col-span-9 text-left">
               <p className="mb-2">1. 输入硅基流动平台的秘钥</p>
               <p className="mb-2">2. 点击熊猫右边的星星图标查看支持的功能</p>
-              <p className="mb-2">3. 按住键盘"F4"键开始说话</p>
+              <p className="mb-2">{`3. 按住键盘"${VOICE_INPUT_SHORTCUT}"键开始说话`}</p>
             </div>
           </div>
 

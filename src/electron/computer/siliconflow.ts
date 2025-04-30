@@ -324,6 +324,60 @@ export class SiliconFlow {
 
   }
 
+  // 文本对话
+  async chat(model: string, messages: any[]){
+    try {
+      const body = {
+        "model": model,
+        "stream": false,
+        "max_tokens": 512,
+        "enable_thinking": false,
+        "thinking_budget": 512,
+        "min_p": 0.05,
+        "temperature": 0.7,
+        "top_p": 0.7,
+        "top_k": 50,
+        "frequency_penalty": 0.5,
+        "n": 1,
+        "stop": [],
+        "response_format": {
+          "type": "text"
+        },
+        "tools": [],
+        "messages": messages
+      };
+      const options = {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(body)
+      };
+
+      // 调用api
+      const response = await fetch(`${this.apiUrl}/chat/completions`, options);
+      if (!response.ok) {
+        // 尝试解析错误响应体
+        let errorDetails = `HTTP error! status: ${response.status}`;
+        try {
+          const errorJson = await response.json(); // 尝试解析JSON
+          console.error(errorJson); 
+        }catch (e) {
+        }
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const response_json = await response.json();
+      // 处理返回结果
+      return response_json['choices'][0]['message'];
+    }
+    catch (error) {
+      console.error(error);
+      throw error;
+    }
+  }
+
   // 文本转向量
   async embedding(text: string): Promise<number[]> {
     // 空字符串抛出异常 注：空字符串siliconflow会返回错误400
@@ -523,6 +577,11 @@ export class SiliconFlowTest {
     // 语音转文本 把上面生成的音频文件作为输入
     const text_out = await this.siliconflow.speechMp3ToText(audioFile);
     console.log(text_out);
+    
+    // 测试文本转向量
+    const text = '你好。';
+    const embedding = await this.siliconflow.embedding(text);
+    console.log(embedding);
   }
 
   async testWav2Text() {
@@ -534,11 +593,16 @@ export class SiliconFlowTest {
   }
 
   async test(){
-    // 测试文本转向量
-    const text = '你好。';
-    // const text = '';
-    const embedding = await this.siliconflow.embedding(text);
-    console.log(embedding);
+    // chat
+    const model = "deepseek-ai/DeepSeek-V3";
+    const messages = [
+      {
+        role: "user",
+        content: "你好"
+      }
+    ]
+    const messages_out = await this.siliconflow.chat(model, messages);
+    console.log(messages_out);
   }
 
 }
@@ -559,7 +623,7 @@ if (isDirectlyExecuted()) {
 
   // 测试
   const test = new SiliconFlowTest(key);
-  await test.testBasic();
-  // await test.test();
+  await test.test();
+  // await test.testBasic();
   // await test.testWav2Text();
 }

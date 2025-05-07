@@ -1,7 +1,7 @@
 // 程序名
 export const APP_NAME = 'TalktoComputer';
 
-// 快捷键
+// 快捷键 （快捷键冲突问题！ F4和office重复冲突，F3是搜索等）
 export const VOICE_INPUT_SHORTCUT = 'F4';
 
 // 语音录制

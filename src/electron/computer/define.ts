@@ -46,3 +46,10 @@ export interface TextAutoProcess {
   autoPasteFlag: boolean;
   autoEnterFlag: boolean;
 }
+
+
+// 记忆传输
+export interface MemoryTransfer {
+  type: string;
+  contentText: string;
+}

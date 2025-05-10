@@ -9,7 +9,7 @@ import { getPreloadPath, getUIPath } from './pathResolver.js';
 import { pollResources, getStaticData } from './resourceManager.js';
 import { ContextReasoner, ComputerExecutor, ShortcutCommandUtil } from './computer/reasoner.js';
 
-import { VOICE_INPUT_SHORTCUT, sendTextType } from './computer/define.js';
+import { VOICE_INPUT_SHORTCUT, sendTextType, MemoryTransfer } from './computer/define.js';
 
 // 语音输入快捷键
 const voiceInputShortcut = VOICE_INPUT_SHORTCUT;
@@ -80,12 +80,20 @@ app.on('ready', async () =>  {
   // 接受前端发送的音频数据
   ipcMainHandle('sendAudio', async (event, audioData: Buffer) => {
     try {
-      const result = await computerExecutor.executeAudio(audioData);
+      const memoryList = await computerExecutor.executeAudio(audioData);
 
       // 结果发送前端
-      console.log('send log');
-      mainWindow.webContents.send('log', result);
-      return result || '';
+      console.log('send memory');
+      for (let i = 0; i < memoryList.length; i++) {
+        const memory = memoryList[i];
+        console.log('send memory', memory.contentText);
+        const memoryTransfer:MemoryTransfer = {
+          type: memory.type,
+          contentText: memory.contentText,
+        }
+        mainWindow.webContents.send('memory', JSON.stringify(memoryTransfer));
+      }
+      return '';
     } catch(err: any) {
       return '运行错误';
     }

@@ -13,6 +13,7 @@ import { clipboard } from 'electron';
 import { ShortcutCommandType, ShortcutCommand, TextAutoProcess } from './define.js';
 import { FilePath, UserFileUtil, SystemPathUtil } from './defineElectron.js';
 import { SiliconFlow } from './siliconflow.js';
+import { MemoryStrand, MemoryManager } from './memory.js';
 
 // 模拟键盘操作
 class KerboardOperator {
@@ -606,6 +607,9 @@ export class ComputerExecutor {
   flagInitSuccess: boolean = false;
   siliconflow: SiliconFlow = new SiliconFlow();
   reasoner: ContextReasoner;
+
+  memoryManager: MemoryManager = new MemoryManager();
+
   constructor() {
     this.reasoner = new ContextReasoner();
   }
@@ -708,10 +712,10 @@ export class ComputerExecutor {
     this.flagInitSuccess = true;
   }
 
-  async executeAudio(audioData: Buffer) {
+  async executeAudio(audioData: Buffer): Promise<MemoryStrand[]>  {
     if (!this.flagInitSuccess) {
       console.error('未初始化，请检查输入key。');
-      return;
+      return[];
     }
     // debug 
     // const audioPath ='./audio.wav';
@@ -723,9 +727,13 @@ export class ComputerExecutor {
     // 判断需求并执行
     const reasonResult = await this.reasoner.reason(textResult);
 
+    // 保存记忆
+    this.memoryManager.addSpokenWords(textResult);
+    this.memoryManager.addComputerAction(reasonResult);
+
     const result = `${textResult}\n${reasonResult}`;
     console.log(result);
-    return result;
+    return this.memoryManager.getMemory(2);
   }
 
   async executeText(text: string) {

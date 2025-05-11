@@ -1,6 +1,6 @@
 /* 全局状态 */
 import React, { createContext, useState, useEffect, useRef, useContext, ReactNode } from 'react';
-import { sendTextType, ShortcutCommand, TextAutoProcess } from '@/electron/computer/define';
+import { sendTextType, ShortcutCommand, TextAutoProcess, MemoryTransfer } from '@/electron/computer/define';
 
 // 全局状态类型
 interface GlobalStateType {
@@ -31,6 +31,10 @@ interface GlobalStateType {
   // app log
   logList: string[];
   setLogList: (logList: string[]) => void;
+
+  // memory
+  memoryList: MemoryTransfer[];
+  setMemoryList: (memoryList: MemoryTransfer[]) => void;
 };
 
 // 创建全局状态上下文
@@ -62,6 +66,9 @@ export const GlobalStateProvider = ({ children }: {children:ReactNode}) => {
 
   // app log
   const [logList, setLogList] = useState<string[]>([]);
+
+  // 记忆
+  const [memoryList, setMemoryList] = useState<MemoryTransfer[]>([]);
 
   // 初始化状态 让 useEffect 只运行一次 因为react在StrictMode下会运行两次
   const hasInitializedRef = useRef(false);
@@ -104,18 +111,25 @@ export const GlobalStateProvider = ({ children }: {children:ReactNode}) => {
     
     initializeData();
 
-    // 注册事件监听器
+    // 注册事件监听器 log
     const logListener = (event: any, message: string) => {
       // 将新的日志添加到日志列表中
       setLogList(prevLogList => [...prevLogList, message]);
     };
-  
+    window.electron.ipcRenderer.on('log', logListener); // 监听 log 事件
 
-    window.electron.ipcRenderer.on('log', logListener);
+    // 注册事件监听器 memory
+    const memoryListener = (event: any, message: string) => {
+      // 将新的记忆添加到记忆列表中
+      const memoryThis: MemoryTransfer = JSON.parse(message);
+      setMemoryList(prevMemoryList => [...prevMemoryList, memoryThis]);
+    };
+    window.electron.ipcRenderer.on('memory', memoryListener); // 监听 memory 事件
 
     // 清理函数，组件卸载时移除监听器
     return () => {
       window.electron.ipcRenderer.removeListener('log', logListener);
+      window.electron.ipcRenderer.removeListener('memory', memoryListener);
     };
   }, []); // 空依赖数组，只在组件挂载时运行一次
 
@@ -136,6 +150,8 @@ export const GlobalStateProvider = ({ children }: {children:ReactNode}) => {
     setTextAutoProcess,
     logList,
     setLogList,
+    memoryList,
+    setMemoryList,
   };
 
   return (

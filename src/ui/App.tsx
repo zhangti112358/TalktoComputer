@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react'
 import './App.css'
 import { Home, Star, MessageSquare } from "lucide-react"; // 图标库
-import { BACKGROUND_IMG, PANDA_FRONT_IMG, PANDA_BACK_IMG, NAV_HEIGHT } from './Common.tsx';
+import { BACKGROUND_IMG, PANDA_FRONT_IMG, PANDA_BACK_IMG, SEAHORSE_IMG, STAR_IMG, NAV_HEIGHT } from './Common.tsx';
 import { useGlobalState, GlobalStateProvider } from './globalState';
 
 // apps
 import { AppHome } from "./AppHome.tsx";
 import { AppShortcut } from "./AppShortcut.tsx";
 import { AppLog } from "./AppLog.tsx";
+import { AppMemory } from "./AppMemory.tsx";
 
 // media
 import { AudioRecorderComponent } from './media.tsx';
@@ -41,8 +42,29 @@ export function AppDefault() {
   // App 数据
   const apps = [
     { id: "app1", name: "Home", icon: <Home size={10} /> },
-    { id: "app2", name: "Shortcut", icon: <Star size={33} /> },
-    { id: "app3", name: "Log", icon: <MessageSquare size={33} /> },
+    { id: "app2", name: "Shortcut", icon: (
+      <div className="p-0">
+        <img 
+          src={STAR_IMG} 
+          alt="star Icon" 
+          width={50}
+          height={50}
+          className="max-w-none"
+        />
+      </div>
+    )},
+    // { id: "app3", name: "Log", icon: <MessageSquare size={33} /> },
+    { id: "app4", name: "Memory", icon: (
+    <div className="p-0">
+      <img 
+        src={SEAHORSE_IMG} 
+        alt="Memory Icon" 
+        width={50}
+        height={50}
+        className="max-w-none"
+      />
+    </div>
+  )},
   ];
 
 
@@ -66,6 +88,11 @@ return (
       {activeApp === "app3" && (
         <div>
           <AppLog></AppLog>
+        </div>
+      )}
+      {activeApp === "app4" && (
+        <div>
+          <AppMemory></AppMemory>
         </div>
       )}
       {activeApp === null && (
@@ -138,7 +165,7 @@ return (
           }}
           className={`flex items-center justify-center cursor-pointer ${activeApp === app.id ? 'ring-2 ring-white/50' : ''}`}
         >
-          <div className="p-2 text-white">
+          <div className="p-0 text-white">
             {app.icon}
           </div>
         </div>

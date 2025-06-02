@@ -66,6 +66,18 @@ export class MemoryManager {
     return textList;
   }
 
+  getMemorySpokenWords(num: number = -1): string[] {
+    let spokenWords: string[] = [];
+    const memories = this.getMemory(num);
+    for (let i = 0; i < memories.length; i++) {
+      const memory = memories[i];
+      if (memory.type === MemoryType.SpokenWords) {
+        spokenWords.push(memory.contentText);
+      }
+    }
+    return spokenWords;
+  }
+
   clearMemories() {
     this.memories = [];
   }

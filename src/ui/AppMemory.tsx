@@ -126,8 +126,27 @@ export function AppMemory() {
   // 记忆存储
   const { memoryList, setMemoryList } = useGlobalState();
 
+  // 主动对话内容
+  const { activeChatResponse } = useGlobalState();
+  useEffect(() => {
+    // 监听主动对话内容变化
+    if (activeChatResponse) {
+      console.log('Active Chat Response:', activeChatResponse);
+    }
+  }, [activeChatResponse]);
+
   return (
     <div className="space-y-8">
+
+      <Card>
+        <CardHeader>
+          <CardTitle>记忆对话</CardTitle>
+          <CardDescription>根据记忆主动对话的内容</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-gray-600">{activeChatResponse}</p>
+        </CardContent>
+      </Card>
 
       <ReadOnlyTable
       data={memoryList}

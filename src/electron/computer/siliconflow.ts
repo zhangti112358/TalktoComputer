@@ -222,6 +222,7 @@ import * as fs from 'fs';
 import * as url from 'url';
 import * as path from 'path';
 import { UserFileUtil } from './defineElectron.js';
+import { get } from 'http';
 
 const sleep = (ms: number): Promise<void> => {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -547,7 +548,7 @@ interface Message {
 // 系统提示词类
 export class SystemPromptExample {
 
-  default(): string{
+  static default(): string{
     const prompt:string = `你是一个智能助手，能够回答用户的问题。请根据用户的输入提供相关信息和建议。`;
     return prompt;
   }
@@ -591,6 +592,48 @@ export class MessageManager {
   // 清空消息
   clearMessages() {
     this.messages = [];
+  }
+
+}
+
+// 对话管理类
+export class ChatManager {
+  private siliconFlow: SiliconFlow;
+  private model: string;
+  private messageManager: MessageManager;
+
+  constructor(model: string = 'deepseek-ai/DeepSeek-V3', systemPrompt: string = SystemPromptExample.default()) {
+    this.siliconFlow = new SiliconFlow();
+    this.siliconFlow.setApiKey(UserFileUtil.readSiliconflowKey());
+    this.model = model;
+    this.messageManager = new MessageManager();
+    // 添加系统消息
+    this.messageManager.addMessageSystem(systemPrompt);
+  }
+
+  initChat(model: string = 'deepseek-ai/DeepSeek-V3', systemPrompt: string = SystemPromptExample.default()) {
+    this.model = model;
+    this.messageManager.clearMessages();
+    // 添加系统消息
+    this.messageManager.addMessageSystem(systemPrompt);
+  }
+
+  async chat(userMessage: string): Promise<string> {
+    // 添加用户消息
+    this.messageManager.addMessageUser(userMessage);
+    const messages = this.messageManager.getMessages();
+    
+    // 获取对话结果
+    const response = await this.siliconFlow.chat(this.model, messages);
+    const content:string = response['content'];
+    // 添加助手消息到消息管理器
+    this.messageManager.addMessageAssistant(content);
+    // 返回助手消息内容
+    return content;
+  }
+
+  getMessages(): Message[] {
+    return this.messageManager.getMessages();
   }
 
 }
@@ -688,7 +731,7 @@ function isDirectlyExecuted() {
     return false;
   }
 }
- 
+
 if (isDirectlyExecuted()) {
   // 测试SiliconFlow
   // 输入key

@@ -35,6 +35,10 @@ interface GlobalStateType {
   // memory
   memoryList: MemoryTransfer[];
   setMemoryList: (memoryList: MemoryTransfer[]) => void;
+
+  // 主动对话内容
+  activeChatResponse: string;
+  setActiveChatResponse: (response: string) => void;
 };
 
 // 创建全局状态上下文
@@ -69,6 +73,9 @@ export const GlobalStateProvider = ({ children }: {children:ReactNode}) => {
 
   // 记忆
   const [memoryList, setMemoryList] = useState<MemoryTransfer[]>([]);
+
+  // 主动对话内容
+  const [activeChatResponse, setActiveChatResponse] = useState<string>("");
 
   // 初始化状态 让 useEffect 只运行一次 因为react在StrictMode下会运行两次
   const hasInitializedRef = useRef(false);
@@ -126,10 +133,18 @@ export const GlobalStateProvider = ({ children }: {children:ReactNode}) => {
     };
     window.electron.ipcRenderer.on('memory', memoryListener); // 监听 memory 事件
 
+    // 注册事件监听器 activeChatResponse
+    const activeChatResponseListener = (event: any, response: string) => {
+      // 更新主动对话内容
+      setActiveChatResponse(response);
+    };
+    window.electron.ipcRenderer.on('activeChatResponse', activeChatResponseListener); // 监听 activeChatResponse 事件
+
     // 清理函数，组件卸载时移除监听器
     return () => {
       window.electron.ipcRenderer.removeListener('log', logListener);
       window.electron.ipcRenderer.removeListener('memory', memoryListener);
+      window.electron.ipcRenderer.removeListener('activeChatResponse', activeChatResponseListener);
     };
   }, []); // 空依赖数组，只在组件挂载时运行一次
 
@@ -152,6 +167,8 @@ export const GlobalStateProvider = ({ children }: {children:ReactNode}) => {
     setLogList,
     memoryList,
     setMemoryList,
+    activeChatResponse,
+    setActiveChatResponse,
   };
 
   return (

@@ -12,7 +12,7 @@ import { clipboard } from 'electron';
 
 import { ShortcutCommandType, ShortcutCommand, TextAutoProcess } from './define.js';
 import { FilePath, UserFileUtil, SystemPathUtil } from './defineElectron.js';
-import { SiliconFlow } from './siliconflow.js';
+import { SiliconFlow, ChatManager } from './siliconflow.js';
 import { MemoryStrand, MemoryManager } from './memory.js';
 
 // 模拟键盘操作
@@ -606,13 +606,40 @@ export class ContextReasoner {
 export class ComputerExecutor {
   flagInitSuccess: boolean = false;
   siliconflow: SiliconFlow = new SiliconFlow();
-  reasoner: ContextReasoner;
+  reasoner: ContextReasoner;  // 推理计算机要做什么
 
-  memoryManager: MemoryManager = new MemoryManager();
+  memoryManager: MemoryManager = new MemoryManager(); // 管理记忆
+
+  // 主动聊天
+  activeChat: ChatManager = new ChatManager();
+
+  async activeChatRun(){
+    // 也许AI应该更加主动地帮助人类 灵感来自在游戏读条的时候，会给玩家一些提示
+
+    const prompt:string = `你是一个AI助手，现在要主动和人类对话。
+    根据你掌握的信息和用户的记忆，主动给人类一些建议和提示。
+    包括但不限制于：有趣的事、生活建议、知识分享、创意灵感、娱乐推荐等。`;
+
+    this.activeChat.initChat('deepseek-ai/DeepSeek-V3', prompt);
+
+    // 用户记忆
+    const memoryList = this.memoryManager.getMemorySpokenWords();
+    const memoryStr = memoryList.join('\n');
+    const chatPrompt = `用户记忆：\n${memoryStr}`;
+
+    const activeResponse:string = await this.activeChat.chat(chatPrompt);
+
+    console.log('记忆:', memoryStr);
+    console.log('主动聊天响应:', activeResponse);
+
+    return activeResponse;
+
+  }
 
   constructor() {
     this.reasoner = new ContextReasoner();
   }
+
 
   async initSiliconflowKey(key: string) {
     UserFileUtil.writeSiliconflowKey(key);

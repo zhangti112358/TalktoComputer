@@ -93,6 +93,11 @@ app.on('ready', async () =>  {
         }
         mainWindow.webContents.send('memory', JSON.stringify(memoryTransfer));
       }
+
+      // 根据记忆主动对话
+      const activeChatResponse = await computerExecutor.activeChatRun();
+      mainWindow.webContents.send('activeChatResponse', activeChatResponse);
+
       return '';
     } catch(err: any) {
       return '运行错误';

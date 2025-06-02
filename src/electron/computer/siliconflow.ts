@@ -533,21 +533,67 @@ export class SiliconFlow {
 
 }
 
+export enum MessageRoleType {
+  system    = 'system',
+  user      = 'user',
+  assistant = 'assistant',
+}
 
-// export function SiliconFlowKeyDefault(): string {
-//   /*
-//   从json中读取key
-//   './user_root/key.json'
-//   {
-//     "siliconflow": {
-//       "key": "sk-"
-//     }
-//   }
-//   */
-//   const keyFile = fs.readFileSync('./user_dir/key.json', 'utf-8');
-//   const key = JSON.parse(keyFile).siliconflow.key;
-//   return key;
-// }
+interface Message {
+  role: MessageRoleType;
+  content: string;
+}
+
+// 系统提示词类
+export class SystemPromptExample {
+
+  default(): string{
+    const prompt:string = `你是一个智能助手，能够回答用户的问题。请根据用户的输入提供相关信息和建议。`;
+    return prompt;
+  }
+}
+
+// 对话上下文管理类
+export class MessageManager {
+  private messages: Message[] = [];
+
+  // 添加新消息
+  addMessage(role: MessageRoleType, content: string) {
+    this.messages.push({ role, content });
+  }
+
+  // 添加消息对象
+  addMessageObject(message: {role: MessageRoleType, content: string}) {
+    if (!Object.values(MessageRoleType).includes(message.role)) {
+      throw new Error('Invalid message role');
+    }
+    this.messages.push(message);
+  }
+
+  // 增加system消息
+  addMessageSystem(content: string) {
+    this.addMessage(MessageRoleType.system, content);
+  }
+  // 增加user消息
+  addMessageUser(content: string) {
+    this.addMessage(MessageRoleType.user, content);
+  }
+  // 增加assistant消息
+  addMessageAssistant(content: string) {
+    this.addMessage(MessageRoleType.assistant, content);
+  }
+
+  // 获取所有消息
+  getMessages(): Message[] {
+    return this.messages;
+  }
+
+  // 清空消息
+  clearMessages() {
+    this.messages = [];
+  }
+
+}
 
 // 测试类
 export class SiliconFlowTest {
@@ -592,17 +638,44 @@ export class SiliconFlowTest {
     console.log(text_out);
   }
 
-  async test(){
-    // chat
+  async testChatSimple() {
+    // 测试对话
     const model = "deepseek-ai/DeepSeek-V3";
     const messages = [
       {
         role: "user",
         content: "你好"
       }
-    ]
+    ];
     const messages_out = await this.siliconflow.chat(model, messages);
     console.log(messages_out);
+  }
+
+  async testChat() {
+    // 测试对话
+    const model = "deepseek-ai/DeepSeek-V3";
+    const messageManager:MessageManager = new MessageManager();
+    // 添加系统消息
+    messageManager.addMessageSystem('你是一个智能助手，能够回答用户的问题。请根据用户的输入提供相关信息和建议。');
+
+    // 对话
+    messageManager.addMessageUser('你好');
+    const messages = messageManager.getMessages();
+    const messages_out = await this.siliconflow.chat(model, messages);
+    console.log(messages_out);
+    messageManager.addMessageAssistant(messages_out['content']); // 添加助手消息到消息管理器
+
+    // 再次对话
+    messageManager.addMessageUser('你是谁？');
+    const messages2 = messageManager.getMessages();
+    const messages_out2 = await this.siliconflow.chat(model, messages2);
+    console.log(messages_out2);
+    messageManager.addMessageAssistant(messages_out2['content']);
+  }
+
+  async test(){
+    // await this.testChatSimple();
+    await this.testChat();
   }
 
 }

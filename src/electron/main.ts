@@ -95,8 +95,8 @@ app.on('ready', async () =>  {
       }
 
       // 根据记忆主动对话
-      const activeChatResponse = await computerExecutor.activeChatRun();
-      mainWindow.webContents.send('activeChatResponse', activeChatResponse);
+      // const activeChatResponse = await computerExecutor.activeChatRun();
+      // mainWindow.webContents.send('activeChatResponse', activeChatResponse);
 
       return '';
     } catch(err: any) {

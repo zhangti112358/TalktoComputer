@@ -138,7 +138,7 @@ export function AppMemory() {
   return (
     <div className="space-y-8">
 
-      <Card>
+      {/* <Card>
         <CardHeader>
           <CardTitle>记忆对话</CardTitle>
           <CardDescription>根据记忆主动对话的内容</CardDescription>
@@ -146,7 +146,7 @@ export function AppMemory() {
         <CardContent>
           <p className="text-sm text-gray-600">{activeChatResponse}</p>
         </CardContent>
-      </Card>
+      </Card> */}
 
       <ReadOnlyTable
       data={memoryList}

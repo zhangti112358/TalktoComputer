@@ -1,7 +1,7 @@
 {
   "name": "talktocomputer",
   "private": true,
-  "version": "25.3.16",
+  "version": "25.8.16",
   "author": "zhangti",
   "type": "module",
   "main": "dist-electron/main.js",

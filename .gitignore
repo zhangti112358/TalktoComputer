@@ -30,3 +30,4 @@ old
 user_dir
 *.wav
 *.mp3
+**/tmp/

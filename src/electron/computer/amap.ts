@@ -252,14 +252,41 @@ export class Amap {
     const data = await response.json();
     return data;
   }
+
+  /*天气查询
+  所有参数均使用和号字符(&)进行分隔
+  https://restapi.amap.com/v3/weather/weatherInfo?parameters
+  */
+  async weather(city: string): Promise<any> {
+    const extention = 'base'; // base: 实时天气, all: 预报天气
+    const output = 'JSON';
+
+    const baseUrl = 'https://restapi.amap.com/v3/weather/weatherInfo';
+
+    const url = `${baseUrl}?key=${this.apiKey}&city=${city}&extensions=${extention}&output=${output}`;
+
+    // 发送请求
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`Amap weather HTTP error! status: ${response.status}`);
+    }
+    const data = await response.json();
+    return data;
+  }
 }
 
 class AmapTest {
   async test() {
     const amap = new Amap();
     amap.setApiKey(amapKey());
+    
+    // 测试地理编码
     const result = await amap.geocode('北京市朝阳区阜通东大街6号');
     console.log(result);
+
+    // 测试天气查询
+    const weatherResult = await amap.weather('110101'); // 北京市东城区的adcode
+    console.log(weatherResult);
   }
 }
 

@@ -171,12 +171,7 @@ export class SentenceSimilarity {
     }
 }
 
-export class FunctionSelect {
-    public function_list: IFunction[];
-    public function_embedding_matrix: math.MathType = math.matrix([]);
-    public function_embedding_list: number[][] = [];    // 维护纯 number[][] 列表以便安全追加行
 
-}
 
 
 

@@ -505,7 +505,188 @@ export class Amap {
   }
 
 
+  // 关键字搜索（REST）
+  // 接口文档：https://restapi.amap.com/v5/place/text
+  // 请求方式：GET https://restapi.amap.com/v5/place/text?parameters
+  //
+  // 必填参数（keywords 或 types 二选一必填）：
+  // - key：高德 Key（需在高德地图官网申请 Web 服务 API 类型 Key）
+  // - keywords：地点关键字（如“北京大学”），只支持一个关键字，长度<80字符
+  // - types：指定地点类型（POI分类码），多个用“|”分隔。
+  //
+  // 可选参数：
+  // - region：搜索区划（citycode/adcode/cityname），如“北京市”。增加指定区域内数据召回权重。
+  // - city_limit：是否限制在 region 内召回（true/false），默认 false。为 true 时，仅召回 region 对应区域内数据。
+  // - show_fields：返回结果控制（children,business,indoor,navi,photos），逗号分隔。
+  // - page_size：每页条数（1-25），默认 10。
+  // - page_num：当前页码，默认 1。
+  // - sig：数字签名。
+  // - output：返回格式，默认 JSON。
+  // - callback：回调函数。
+  //
+  // 返回结构：
+  // status/info/infocode/count：状态及总数
+  // pois：POI 数组，包含 name, id, location, type, address, cityname 等基础信息
+  // 通过 show_fields 可获取 children（子POI）、business（营业时间/评分/人均等）、indoor（室内）、navi（入口）、photos（图片）等。
+  async searchPlaceText(
+    keywords: string,
+    types: string = '',
+    options: {
+      region?: string;
+      city_limit?: boolean;
+      show_fields?: string;
+      page_size?: number;
+      page_num?: number;
+    } = {},
+    raw_output?: boolean,
+  ) {
+    if (!keywords && !types) {
+      throw new Error('Amap placeText error: keywords or types must be provided.');
+    }
 
+    const params = new URLSearchParams({
+      key: this.apiKey,
+    });
+
+    if (keywords) params.append('keywords', keywords);
+    if (types) params.append('types', types);
+    if (options.region) params.append('region', options.region);
+    if (options.city_limit !== undefined) params.append('city_limit', String(options.city_limit));
+    if (options.show_fields) params.append('show_fields', options.show_fields);
+    if (options.page_size) params.append('page_size', String(options.page_size));
+    if (options.page_num) params.append('page_num', String(options.page_num));
+
+    const url = `https://restapi.amap.com/v5/place/text?${params.toString()}`;
+
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`Amap placeText HTTP error! status: ${response.status}`);
+    }
+    const data = await response.json();
+
+    if (raw_output) {
+      return data;
+    }
+
+    const simplifiedPois = data?.pois ?? [];
+    return {
+      status: data?.status,
+      info: data?.info,
+      count: data?.count,
+      pois: simplifiedPois.map((poi: any) => ({
+        name: poi.name,
+        id: poi.id,
+        location: poi.location,
+        address: poi.address,
+        pname: poi.pname,
+        cityname: poi.cityname,
+        adname: poi.adname,
+        type: poi.type,
+        // 尝试提取常用扩展字段（如果 show_fields 请求了 business 等）
+        tel: poi.tel,
+        rating: poi.business?.rating,
+        cost: poi.business?.cost,
+        opentime: poi.business?.opentime_week || poi.business?.opentime_today,
+      })),
+    };
+  }
+
+
+  // 周边搜索（REST）
+  // 接口文档：https://restapi.amap.com/v5/place/around
+  // 请求方式：GET https://restapi.amap.com/v5/place/around?parameters
+  //
+  // 必填参数：
+  // - key：高德 Key
+  // - location：中心点坐标（经度,纬度），如 "116.473168,39.993015"
+  //
+  // 可选参数：
+  // - keywords：地点关键字
+  // - types：指定地点类型（POI分类码），多个用“|”分隔
+  // - radius：搜索半径，范围 0-50000，默认 5000（米）
+  // - sortrule：排序规则，distance（距离排序，默认）| weight（综合排序）
+  // - region：搜索区划
+  // - city_limit：是否限制在 region 内召回
+  // - show_fields：返回结果控制（children,business,indoor,navi,photos），逗号分隔
+  // - page_size：每页条数（1-25），默认 10
+  // - page_num：当前页码，默认 1
+  // - sig：数字签名
+  // - output：返回格式，默认 JSON
+  //
+  // 返回结构：
+  // status/info/infocode/count：状态及总数
+  // pois：POI 数组，包含 name, id, location, distance, type, address 等
+  async searchPlaceAround(
+    location: string,
+    keywords: string = '',
+    types: string = '',
+    options: {
+      radius?: number;
+      sortrule?: 'distance' | 'weight';
+      region?: string;
+      city_limit?: boolean;
+      show_fields?: string;
+      page_size?: number;
+      page_num?: number;
+    } = {},
+    raw_output?: boolean,
+  ) {
+    if (!location) {
+      throw new Error('Amap placeAround error: location must be provided.');
+    }
+
+    const params = new URLSearchParams({
+      key: this.apiKey,
+      location: location,
+    });
+
+    if (keywords) params.append('keywords', keywords);
+    if (types) params.append('types', types);
+    if (options.radius) params.append('radius', String(options.radius));
+    if (options.sortrule) params.append('sortrule', options.sortrule);
+    if (options.region) params.append('region', options.region);
+    if (options.city_limit !== undefined) params.append('city_limit', String(options.city_limit));
+    if (options.show_fields) params.append('show_fields', options.show_fields);
+    if (options.page_size) params.append('page_size', String(options.page_size));
+    if (options.page_num) params.append('page_num', String(options.page_num));
+
+    const url = `https://restapi.amap.com/v5/place/around?${params.toString()}`;
+
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`Amap placeAround HTTP error! status: ${response.status}`);
+    }
+    const data = await response.json();
+
+    if (raw_output) {
+      return data;
+    }
+
+    const simplifiedPois = data?.pois ?? [];
+    return {
+      status: data?.status,
+      info: data?.info,
+      count: data?.count,
+      pois: simplifiedPois.map((poi: any) => ({
+        name: poi.name,
+        id: poi.id,
+        location: poi.location,
+        distance: poi.distance, // 周边搜索特有字段：离中心点距离
+        address: poi.address,
+        pname: poi.pname,
+        cityname: poi.cityname,
+        adname: poi.adname,
+        type: poi.type,
+        // 尝试提取常用扩展字段
+        tel: poi.tel,
+        rating: poi.business?.rating,
+        cost: poi.business?.cost,
+        opentime: poi.business?.opentime_week || poi.business?.opentime_today,
+        photos: poi.photos,
+      })),
+    };
+  }
+  
 
   /*天气查询
   所有参数均使用和号字符(&)进行分隔
@@ -645,17 +826,24 @@ class AmapTest {
     // const directionResult = await amap.directionDriving('116.481028,39.989643', '116.434446,39.90816');
     // console.log(directionResult);
     // 测试步行路线规划
-    const walkingResult = await amap.directionWalking('116.481028,39.989643', '116.434446,39.90816');
-    console.log(walkingResult);
-    // 测试骑行路线规划
-    const bicyclingResult = await amap.directionBicycling('116.481028,39.989643', '116.434446,39.90816');
-    console.log(bicyclingResult);
-    // 测试电动车路线规划
-    const electrobikeResult = await amap.directionElectrobike('116.481028,39.989643', '116.434446,39.90816');
-    console.log(electrobikeResult);
-    // 测试公交路线规划
-    const transitResult = await amap.directionTransitIntegrated('116.481028,39.989643', '116.434446,39.90816', '010', '010');
-    console.log(transitResult);
+    // const walkingResult = await amap.directionWalking('116.481028,39.989643', '116.434446,39.90816');
+    // console.log(walkingResult);
+    // // 测试骑行路线规划
+    // const bicyclingResult = await amap.directionBicycling('116.481028,39.989643', '116.434446,39.90816');
+    // console.log(bicyclingResult);
+    // // 测试电动车路线规划
+    // const electrobikeResult = await amap.directionElectrobike('116.481028,39.989643', '116.434446,39.90816');
+    // console.log(electrobikeResult);
+    // // 测试公交路线规划
+    // const transitResult = await amap.directionTransitIntegrated('116.481028,39.989643', '116.434446,39.90816', '010', '010');
+    // console.log(transitResult);
+
+    // 测试关键字搜索
+    const placeResult = await amap.searchPlaceText('北京大学', '', { region: '北京市', city_limit: true, page_size: 5 });
+    console.log(placeResult);
+    // 测试周边搜索
+    const aroundResult = await amap.searchPlaceAround('116.481028,39.989643', '餐饮', '', { radius: 1000, sortrule: 'distance', page_size: 5 });
+    console.log(aroundResult);
 
     // 测试天气查询
     // const weatherResult = await amap.weather('110101'); // 北京市东城区的adcode

@@ -495,6 +495,7 @@ export class ContextReasoner {
   textOperator: TextOprator = new TextOprator();
 
   // 返回结果
+  flagShortcutFinded: boolean = false;
   result: string = '';
 
   setApiKey(key: string) {
@@ -554,9 +555,11 @@ export class ContextReasoner {
     let executeResult = '';
     if (maxSimilarity > this.similarityThreshold) {
       executeResult = await op.execute();
+      this.flagShortcutFinded = true;
       executeResult = `最相似（${(maxSimilarity * 100).toFixed(0)}%）：${op.name} 执行`;
     }
     else{
+      this.flagShortcutFinded = false;
       executeResult = `最相似（${(maxSimilarity * 100).toFixed(0)}%）：${op.name} 不执行`;
     }
     // console.log(executeResult);
@@ -583,21 +586,21 @@ export class ContextReasoner {
     return flagSearch;
   }
 
-  async reason(text: string) {
+  async shortCut(text: string) {
     this.result = '';
 
     // 空字符串不处理
     if (text === '') {
       this.result = '空字符串 不处理';
     }
-    else if (await this.isSearch(text)) {
+    // 优先搜索和快捷指令
+    this.flagShortcutFinded = await this.isSearch(text);
+    if (this.flagShortcutFinded) {
       // isSearch 已经执行了搜索
     }
     else {
       this.result = await this.opSimilarity(text);
     }
-
-    await this.textOperator.execute(text);
 
     return this.result;
   }
@@ -614,6 +617,7 @@ export class ComputerExecutor {
   activeChat: ChatManager = new ChatManager();
 
   async activeChatRun(){
+    // 暂时不使用
     // 也许AI应该更加主动地帮助人类 灵感来自在游戏读条的时候，会给玩家一些提示
 
     const prompt:string = `你是一个AI助手，现在要主动和人类对话。
@@ -623,7 +627,7 @@ export class ComputerExecutor {
     this.activeChat.initChat('deepseek-ai/DeepSeek-V3', prompt);
 
     // 用户记忆
-    const memoryList = this.memoryManager.getMemorySpokenWords();
+    const memoryList = this.memoryManager.getSpokenWords();
     const memoryStr = memoryList.join('\n');
     const chatPrompt = `用户记忆：\n${memoryStr}`;
 
@@ -751,8 +755,13 @@ export class ComputerExecutor {
     // 语音识别
     const textResult = await this.siliconflow.speechWavToText(audioData);
 
-    // 判断需求并执行
-    const reasonResult = await this.reasoner.reason(textResult);
+    // 优先快捷指令和搜索
+    const reasonResult = await this.reasoner.shortCut(textResult);
+
+    // 文字对话
+
+    // 文字操作（复制 粘贴等）
+    await this.reasoner.textOperator.execute(textResult);
 
     // 保存记忆
     this.memoryManager.addSpokenWords(textResult);
@@ -765,7 +774,7 @@ export class ComputerExecutor {
 
   async executeText(text: string) {
     // 判断需求并执行
-    await this.reasoner.reason(text);
+    await this.reasoner.shortCut(text);
   }
 
   
@@ -804,13 +813,13 @@ class ComputerTest {
     await reasoner.init();
     
     // 测试网站访问
-    // await reasoner.reason('给鲸鱼发消息');
+    // await reasoner.shortCut('给鲸鱼发消息');
     
     // 测试搜索功能
-    await reasoner.reason('知乎搜索typescript');
+    await reasoner.shortCut('知乎搜索typescript');
     
     // 测试steam启动游戏
-    // await reasoner.reason('玩传送门');
+    // await reasoner.shortCut('玩传送门');
   }
 
   /**

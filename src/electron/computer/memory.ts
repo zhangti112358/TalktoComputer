@@ -7,6 +7,7 @@ export enum MemoryType {
   SeenImage       = '图像',
   SeenText        = '文字',
   computerAction  = '计算机操作',
+  responseText    = '文字回复',
   Other           = '其他'
 };
 
@@ -66,7 +67,7 @@ export class MemoryManager {
     return textList;
   }
 
-  getMemorySpokenWords(num: number = -1): string[] {
+  getSpokenWords(num: number = -1): string[] {
     let spokenWords: string[] = [];
     const memories = this.getMemory(num);
     for (let i = 0; i < memories.length; i++) {

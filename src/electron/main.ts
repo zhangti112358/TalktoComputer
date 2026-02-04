@@ -1,5 +1,5 @@
 import { app, BrowserWindow, globalShortcut, ipcMain, systemPreferences, Menu } from 'electron';
-import { GlobalKeyboardListener } from "node-global-key-listener";
+import { uIOhook, UiohookKey } from 'uiohook-napi';
 import { execSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
@@ -50,29 +50,40 @@ app.on('ready', async () =>  {
     return getStaticData();
   });
 
-  // 当按下快捷键时，开始语音输入
   let voiceInputFlag = false;
-  const v = new GlobalKeyboardListener();
-  // 监听快捷键
-  v.addListener(function (e, down) {
-    // console.log(`Key pressed: ${e.name}, state: ${e.state}`);
-    if (e.name === voiceInputShortcut) {
-      // 如果已经按下，等待抬起停止
-      if (voiceInputFlag) {
-        if (e.state === 'UP'){
-          mainWindow.webContents.send('stopRecording');
-          voiceInputFlag = false;
-        }
-      }
-      // 如果没有按下，等待按下操作
-      else {
-        if (e.state === 'DOWN'){
-          mainWindow.webContents.send('startRecording');
-          voiceInputFlag = true;
-        }
+
+  // 快捷键监听设置
+  let keycode = UiohookKey.F4;
+  if (VOICE_INPUT_SHORTCUT === 'F4') {
+    keycode = UiohookKey.F4;
+  }
+  else {
+    // 报错
+    throw new Error('当前仅支持F4作为快捷键，扩展此处代码以支持更多快捷键');
+  }
+
+
+  // 这里的监听是系统级的，不需要窗口获得焦点
+  uIOhook.on('keydown', (e) => {
+    if (e.keycode === keycode) {
+      if (!voiceInputFlag) {
+        console.log('检测到后台F4按下');
+        mainWindow.webContents.send('startRecording');
+        voiceInputFlag = true;
       }
     }
   });
+
+  uIOhook.on('keyup', (e) => {
+    if (e.keycode === keycode) {
+      console.log('检测到后台F4抬起');
+      mainWindow.webContents.send('stopRecording');
+      voiceInputFlag = false;
+    }
+  });
+
+  // 必须启动
+  uIOhook.start();
 
   const computerExecutor = new ComputerExecutor();
   computerExecutor.init();
@@ -137,7 +148,7 @@ app.on('ready', async () =>  {
   });
 
   mainWindow.on('closed', () => {
-    v.kill();
+    uIOhook.stop();
     app.quit();
   });
 });

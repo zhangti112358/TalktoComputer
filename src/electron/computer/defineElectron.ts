@@ -146,3 +146,9 @@ export class FilePath {
     }
   
   }
+
+
+// 单独提供接口
+export function getSiliconflowKey(): string {
+    return UserFileUtil.readSiliconflowKey();
+}

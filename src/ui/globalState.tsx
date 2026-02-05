@@ -8,6 +8,8 @@ interface GlobalStateType {
   // 音频录制
   recording: boolean;
   setRecording: (recording: boolean) => void;
+  autoRecord: boolean;
+  setAutoRecord: (autoRecord: boolean) => void;
   hasInitializedRecoder: React.MutableRefObject<boolean>;
 
   // 主界面
@@ -48,6 +50,7 @@ export const GlobalStateContext = createContext<GlobalStateType | undefined>(und
 export const GlobalStateProvider = ({ children }: {children:ReactNode}) => {
   // 音频录制状态
   const [recording, setRecording] = useState(false);
+  const [autoRecord, setAutoRecord] = useState(true);
   const hasInitializedRecoder = useRef(false);
 
   // 主界面状态
@@ -152,6 +155,8 @@ export const GlobalStateProvider = ({ children }: {children:ReactNode}) => {
   const value = {
     recording,
     setRecording,
+    autoRecord,
+    setAutoRecord,
     hasInitializedRecoder,
     activeApp,
     setActiveApp,

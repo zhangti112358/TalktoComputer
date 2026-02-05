@@ -3,6 +3,8 @@ import './App.css'
 import { Home, Star, MessageSquare } from "lucide-react"; // 图标库
 import { BACKGROUND_IMG, PANDA_FRONT_IMG, PANDA_BACK_IMG, SEAHORSE_IMG, STAR_IMG, NAV_HEIGHT } from './Common.tsx';
 import { useGlobalState, GlobalStateProvider } from './globalState';
+import { MicVAD } from "@ricky0123/vad-web";
+
 
 // apps
 import { AppHome } from "./AppHome.tsx";
@@ -12,6 +14,50 @@ import { AppMemory } from "./AppMemory.tsx";
 
 // media
 import { AudioRecorderComponent } from './media.tsx';
+
+
+export const AudioRecorderComponent2 = () => {
+  const { setRecording } = useGlobalState();
+
+  useEffect(() => {
+    let myvad: any = null;
+
+    const initVAD = async () => {
+      try {
+        myvad = await MicVAD.new({
+          onSpeechStart: () => {
+            console.log("Speech start detected");
+            setRecording(true);
+          },
+          onSpeechEnd: (audio) => {
+            console.log("Speech end detected");
+            setRecording(false);
+            // 这里可以处理 audio (Float32Array)
+            // 例如发送到后端或进行语音转文字
+          },
+          // 如果是本地开发，onnxruntime 的 WASM 文件通常需要正确配置路径
+          // 在 Electron 环境中，这些可以直接引用 CDN 或放置在 public 目录下
+          onnxWASMBasePath: "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.22.0/dist/",
+          baseAssetPath: "https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@0.0.29/dist/",
+        });
+        
+        myvad.start();
+      } catch (e) {
+        console.error("VAD init failed:", e);
+      }
+    };
+
+    initVAD();
+
+    return () => {
+      if (myvad) {
+        myvad.pause();
+      }
+    };
+  }, [setRecording]);
+
+  return null; // 此组件仅负责 VAD 逻辑，不渲染 UI
+};
 
 export function AppDefault() {
   // 全局状态
@@ -172,6 +218,8 @@ return (
       ))}
     </div>
     <AudioRecorderComponent />
+    <AudioRecorderComponent2 />
+
   </div>
 );
 }

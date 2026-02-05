@@ -1,12 +1,33 @@
 import { Buffer } from 'buffer';
 import { getWaveBlob } from "webm-to-wav-converter";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { MicVAD } from "@ricky0123/vad-web";
 
 import { useGlobalState } from './globalState';
 import { WAV_SAMPLE_RATE, WAV_BITS_PER_SAMPLE, WAV_CHANNELS } from '@/electron/computer/define';
 
 // 音频处理工具类
 export class MediaUtils {
+  // 新增：将 Float32Array 直接转换为 Wav Buffer
+  static float32ToWav(f32Array: Float32Array, sampleRate: number, bitsPerSample: number, channels: number): Buffer {
+    let pcmBuffer: Buffer;
+    
+    if (bitsPerSample === 16) {
+      // 转换为 Int16
+      const int16Array = new Int16Array(f32Array.length);
+      for (let i = 0; i < f32Array.length; i++) {
+        const s = Math.max(-1, Math.min(1, f32Array[i]));
+        int16Array[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+      }
+      pcmBuffer = Buffer.from(int16Array.buffer);
+    } else {
+      // 保持 Float32
+      pcmBuffer = Buffer.from(f32Array.buffer);
+    }
+
+    return MediaUtils.audioBuffer2WavBuffer(pcmBuffer, sampleRate, bitsPerSample, channels);
+  }
+
   static async webm2wav(webmBlob: Blob, sampleRate: number, bitsPerSample: number, channels: number): Promise<Buffer> {
     // webmBlob 转换为 wavBlob
     let f32_flag = true;
@@ -125,11 +146,82 @@ export class AudioRecorder {
 // 音频录制组件
 export const AudioRecorderComponent = () => {
   
-  const { recording, setRecording } = useGlobalState(); // recording使用全局状态中的
+  const { recording, setRecording, autoRecord } = useGlobalState(); // 假设 globalState 中有 autoRecord
   const [audioURL, setAudioURL] = useState<string | null>(null);
   const recorderRef = useRef<AudioRecorder>(new AudioRecorder());
+  const vadRef = useRef<any>(null);
 
   const { hasInitializedRecoder } = useGlobalState();
+
+  const startRecording = useCallback(async () => {
+    try {
+      if (audioURL) {
+        URL.revokeObjectURL(audioURL);
+        setAudioURL(null);
+      }
+      await recorderRef.current.startRecording();
+      setRecording(true);
+    } catch (error) {
+      console.error("录音失败:", error);
+    }
+  }, [audioURL, setRecording]);
+
+  const stopRecording = useCallback(async () => {
+    if (!recorderRef.current.getIsRecording()) return;
+    const audioUrl = await recorderRef.current.stopRecording();
+    setAudioURL(audioUrl);
+    setRecording(false);
+  }, [setRecording]);
+
+  useEffect(() => {
+    // 处理 VAD 逻辑
+    const initVAD = async () => {
+      if (autoRecord && !vadRef.current) {
+        try {
+          vadRef.current = await MicVAD.new({
+            preSpeechPadMs: 500, // 增加预留时间，确保捕获完整语音
+            positiveSpeechThreshold: 0.7, // 调整检测灵敏度
+            minSpeechMs: 300, // 最短语音长度，过滤掉短促噪音
+            onSpeechStart: () => {
+              console.log("VAD: Speech detected");
+              setRecording(true);
+            },
+            onSpeechEnd: async (audio: Float32Array) => {
+              console.log("VAD: Speech ended");
+              setRecording(false);
+              
+              // 直接使用 VAD 提供的完整音频（已包含 preSpeechPadFrames 部分）
+              const wavBuffer = MediaUtils.float32ToWav(
+                audio, 
+                16000, // MicVAD 默认采样率通常是 16000
+                WAV_BITS_PER_SAMPLE, 
+                WAV_CHANNELS
+              );
+              
+              await window.electron.sendAudioData(wavBuffer);
+            },
+            onnxWASMBasePath: "/lib/vad/",
+            baseAssetPath: "/lib/vad/",
+          });
+          vadRef.current.start();
+        } catch (e) {
+          console.error("VAD initialization failed:", e);
+        }
+      } else if (!autoRecord && vadRef.current) {
+        vadRef.current.pause();
+        vadRef.current = null;
+      }
+    };
+
+    initVAD();
+
+    return () => {
+      if (vadRef.current) {
+        vadRef.current.pause();
+        vadRef.current = null;
+      }
+    };
+  }, [autoRecord, startRecording, stopRecording]);
 
   useEffect(() => {
     // 防止重复初始化
@@ -157,26 +249,6 @@ export const AudioRecorderComponent = () => {
     };
   }, []);
 
-
-  const startRecording = async () => {
-    try {
-      // 如果存在之前的音频URL，先清理掉
-      if (audioURL) {
-        URL.revokeObjectURL(audioURL);
-        setAudioURL(null);
-      }
-      await recorderRef.current.startRecording();
-      setRecording(true);
-    } catch (error) {
-      console.error("录音失败:", error);
-    }
-  };
-
-  const stopRecording = async () => {
-    const audioUrl = await recorderRef.current.stopRecording();
-    setAudioURL(audioUrl);
-    setRecording(false);
-  };
 
   // 组件卸载时清理URL
   useEffect(() => {

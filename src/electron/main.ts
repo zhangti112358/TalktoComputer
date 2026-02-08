@@ -94,10 +94,10 @@ app.on('ready', async () =>  {
       const memoryList = await computerExecutor.executeAudio(audioData);
 
       // 结果发送前端
-      console.log('send memory');
+      // console.log('send memory');
       for (let i = 0; i < memoryList.length; i++) {
         const memory = memoryList[i];
-        console.log('send memory', memory.contentText);
+        // console.log('send memory', memory.contentText);
         const memoryTransfer:MemoryTransfer = {
           type: memory.type,
           contentText: memory.contentText,

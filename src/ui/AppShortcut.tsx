@@ -238,7 +238,7 @@ export function EditableTable<T extends EditableItem>({
 export function AppShortcut() {
 
   // 文本操作
-  const { textAutoProcess, setTextAutoProcess } = useGlobalState();
+  const { textAutoProcess, setTextAutoProcess, autoRecord, setAutoRecord } = useGlobalState();
 
   // 处理自动复制开关状态变化
   const handleAutoCopyChange = (checked: boolean) => {
@@ -358,11 +358,20 @@ export function AppShortcut() {
     {/* 文字处理卡片 */}
     <Card className="w-full">
       <CardHeader>
-        <CardTitle>文字</CardTitle>
-        <CardDescription>语音识别后的文字处理</CardDescription>
+        <CardTitle>语音和文字处理</CardTitle>
+        {/* <CardDescription>语音识别与自动化处理设置</CardDescription> */}
       </CardHeader>
       <CardContent>
         <div className="flex flex-wrap gap-8 justify-center">
+          <div className="flex items-center space-x-2 border-r pr-8">
+            <Switch 
+              id="auto-record" 
+              checked={autoRecord}
+              onCheckedChange={setAutoRecord}
+              className="data-[state=checked]:bg-green-500"
+            />
+            <Label htmlFor="auto-record" className="font-bold">正面模式</Label>
+          </div>
           <div className="flex items-center space-x-2">
             <Switch 
               id="auto-copy" 

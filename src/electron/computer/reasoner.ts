@@ -748,12 +748,16 @@ export class ComputerExecutor {
       console.error('未初始化，请检查输入key。');
       return[];
     }
+
+    const startTime = Date.now();
+    console.log(`\n[${new Date().toLocaleTimeString()}] [音频推理开始] --------------------`);
     // debug 
     // const audioPath ='./audio.wav';
     // await fs.promises.writeFile(audioPath, audioData);
 
     // 语音识别
     const textResult = await this.siliconflow.speechWavToText(audioData);
+    console.log(`[${new Date().toLocaleTimeString()}] [ASR识别结果] -> "${textResult}"`);
 
     // 优先快捷指令和搜索
     const reasonResult = await this.reasoner.shortCut(textResult);
@@ -767,8 +771,10 @@ export class ComputerExecutor {
     this.memoryManager.addSpokenWords(textResult);
     this.memoryManager.addComputerAction(reasonResult);
 
-    const result = `${textResult}\n${reasonResult}`;
-    console.log(result);
+    console.log(`[${new Date().toLocaleTimeString()}] [推理结果] -> "${reasonResult}"`);
+    const endTime = Date.now();
+    console.log(`[${new Date().toLocaleTimeString()}] [音频推理结束] 耗时: ${((endTime - startTime) / 1000).toFixed(2)}s --------------------\n`);
+
     return this.memoryManager.getMemory(2);
   }
 

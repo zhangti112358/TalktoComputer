@@ -146,90 +146,159 @@ export class AudioRecorder {
 // 音频录制组件
 export const AudioRecorderComponent = () => {
   
-  const { recording, setRecording, autoRecord } = useGlobalState(); // 假设 globalState 中有 autoRecord
+  const { recording, setRecording, autoRecord, setAutoRecord } = useGlobalState(); // 假设 globalState 中有 autoRecord
   const [audioURL, setAudioURL] = useState<string | null>(null);
+  // 新增：专门用于标记是否正在进行手动录音的状态
+  const [isManualRecording, setIsManualRecording] = useState(false);
+
   const recorderRef = useRef<AudioRecorder>(new AudioRecorder());
   const vadRef = useRef<any>(null);
 
   const { hasInitializedRecoder } = useGlobalState();
 
   const startRecording = useCallback(async () => {
+    // 1. 防抖检查
+    if (recorderRef.current.getIsRecording()) {
+      console.log("正在录音中，忽略重复的开始请求");
+      return;
+    }
+
     try {
       if (audioURL) {
         URL.revokeObjectURL(audioURL);
         setAudioURL(null);
       }
+
+      // 2. 标记确认为手动录音模式
+      // 这会触发下方的 useEffect，自动安全地暂停/销毁 VAD
+      setIsManualRecording(true);
+
+      // 双重保险：虽然 Effect 会跑，但立即暂停它是最安全的
+      if (vadRef.current) {
+        vadRef.current.pause();
+      }
+
       await recorderRef.current.startRecording();
       setRecording(true);
     } catch (error) {
       console.error("录音失败:", error);
+      setIsManualRecording(false);
     }
   }, [audioURL, setRecording]);
 
   const stopRecording = useCallback(async () => {
     if (!recorderRef.current.getIsRecording()) return;
+    
     const audioUrl = await recorderRef.current.stopRecording();
     setAudioURL(audioUrl);
     setRecording(false);
-  }, [setRecording]);
+
+    // 3. 手动录音结束，退出手动模式
+    // 这会触发下方的 useEffect，如果 autoRecord 开着，它会自动将 VAD 恢复/重建
+    setIsManualRecording(false);
+
+  }, [setRecording]); 
 
   useEffect(() => {
+    let isAborted = false; // 标志位：当前 effect 是否已被清理
+    let isProcessing = false; // 定义处理状态标志位
+
     // 处理 VAD 逻辑
     const initVAD = async () => {
-      if (autoRecord && !vadRef.current) {
+      // 只有在 (autoRecord 为 true) 且 (不在手动录音中) 时才初始化 VAD
+      if (autoRecord && !isManualRecording) {
+        
         try {
-          vadRef.current = await MicVAD.new({
-            preSpeechPadMs: 500, // 增加预留时间，确保捕获完整语音
-            positiveSpeechThreshold: 0.7, // 调整检测灵敏度
-            minSpeechMs: 300, // 最短语音长度，过滤掉短促噪音
+          const vadInstance = await MicVAD.new({
+            preSpeechPadMs: 500, 
+            positiveSpeechThreshold: 0.7, 
+            minSpeechMs: 300, 
             onSpeechStart: () => {
-              console.log("VAD: Speech detected");
+              // 三重保险拦截
+              if (isManualRecording) return;
+              console.log(`[${new Date().toLocaleTimeString()}] UI: VAD 检测到语音开始`);
               setRecording(true);
             },
             onSpeechEnd: async (audio: Float32Array) => {
-              console.log("VAD: Speech ended");
+              // 三重保险拦截
+              if (isManualRecording) return;
+              console.log(`[${new Date().toLocaleTimeString()}] UI: VAD 检测到语音结束`);
               setRecording(false);
               
-              // 直接使用 VAD 提供的完整音频（已包含 preSpeechPadFrames 部分）
-              const wavBuffer = MediaUtils.float32ToWav(
-                audio, 
-                16000, // MicVAD 默认采样率通常是 16000
-                WAV_BITS_PER_SAMPLE, 
-                WAV_CHANNELS
-              );
-              
-              await window.electron.sendAudioData(wavBuffer);
+              if (isProcessing) {
+                console.warn("VAD: 正在处理中，忽略此次重复触发");
+                return;
+              }
+
+              if (audio.length < 8000) { 
+                console.log("VAD: 音频过短，忽略发送");
+                return;
+              }
+
+              try {
+                isProcessing = true;
+                const wavBuffer = MediaUtils.float32ToWav(
+                  audio, 
+                  16000, 
+                  WAV_BITS_PER_SAMPLE, 
+                  WAV_CHANNELS
+                );
+                
+                console.log(`[${new Date().toLocaleTimeString()}] UI: 准备发送 VAD 音频, 大小: ${wavBuffer.length}`);
+                const result = await window.electron.sendAudioData(wavBuffer);
+                console.log("UI: 后端返回结果:", result);
+              } catch (err) {
+                console.error("UI: 发送音频失败:", err);
+              } finally {
+                isProcessing = false;
+              }
             },
-            onnxWASMBasePath: "/lib/vad/",
-            baseAssetPath: "/lib/vad/",
+          onnxWASMBasePath: "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.22.0/dist/",
+          baseAssetPath: "https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@0.0.29/dist/",
+            redemptionMs: 400, 
           });
+
+          // 关键修复：如果在 await 期间变为手动录音模式或组件卸载，则销毁
+          if (isAborted || isManualRecording) {
+            console.log("VAD: 初始化期间状态变更，立即销毁实例。");
+            vadInstance.pause();
+            return;
+          }
+
+          if (vadRef.current) {
+             vadRef.current.pause();
+          }
+
+          vadRef.current = vadInstance;
           vadRef.current.start();
         } catch (e) {
           console.error("VAD initialization failed:", e);
         }
-      } else if (!autoRecord && vadRef.current) {
-        vadRef.current.pause();
-        vadRef.current = null;
+      } else {
+        // 如果 autoRecord 为 false 或者 正在手动录音，暂停并清理
+        if (vadRef.current) {
+          console.log("VAD: 暂停检测 (autoRecord关闭 或 手动录音中)");
+          vadRef.current.pause();
+          vadRef.current = null;
+        }
       }
     };
 
     initVAD();
 
     return () => {
+      isAborted = true; 
       if (vadRef.current) {
         vadRef.current.pause();
         vadRef.current = null;
       }
     };
-  }, [autoRecord, startRecording, stopRecording]);
+  }, [autoRecord, isManualRecording, startRecording, stopRecording]);
 
   useEffect(() => {
-    // 防止重复初始化
-    if (hasInitializedRecoder.current) {
-      return;
-    }
-    hasInitializedRecoder.current = true;
-
+    // 移除 hasInitializedRecoder 检查，改用标准的 React 依赖更新机制
+    // 这样当 startRecording/stopRecording 更新时（比如 autoRecord 变化），监听器也会更新
+    
     // 注册事件监听器
     const startRecordingListener = () => {
       startRecording();
@@ -242,12 +311,12 @@ export const AudioRecorderComponent = () => {
     window.electron.ipcRenderer.on('startRecording', startRecordingListener);
     window.electron.ipcRenderer.on('stopRecording', stopRecordingListener);
 
-    // 清理函数，组件卸载时移除监听器
+    // 清理函数，组件卸载或依赖更新时移除监听器
     return () => {
       window.electron.ipcRenderer.removeListener('startRecording', startRecordingListener);
       window.electron.ipcRenderer.removeListener('stopRecording', stopRecordingListener);
     };
-  }, []);
+  }, [startRecording, stopRecording]); // 添加依赖，确保闭包最新
 
 
   // 组件卸载时清理URL

@@ -34,6 +34,25 @@ class AIModelProvider {
             throw error;
         }
     }
+
+    async *fetchStreamingCompletion(model: string, messages: Message[]) {
+        try {
+            const stream = await this.client.chat.completions.create({
+                model: model,
+                messages: messages,
+                stream: true,
+            });
+            for await (const chunk of stream) {
+                const content = chunk.choices[0]?.delta?.content || '';
+                if (content) {
+                    yield content;
+                }
+            }
+        } catch (error) {
+            console.error('API Provider Streaming Error:', error);
+            throw error;
+        }
+    }
 }
 
 /**
@@ -67,6 +86,22 @@ class ConversationManager {
         return assistantResponse;
     }
 
+    async *sendMessageStreaming(userInput: string) {
+        this.messages.push({ role: 'user', content: userInput });
+
+        let fullResponse = '';
+        const stream = this.provider.fetchStreamingCompletion(this.model, this.messages);
+
+        for await (const part of stream) {
+            fullResponse += part;
+            yield part;
+        }
+
+        if (fullResponse) {
+            this.messages.push({ role: 'assistant', content: fullResponse });
+        }
+    }
+
     clearHistory(): void {
         const systemMsg = this.messages[0];
         this.messages = [systemMsg];
@@ -89,12 +124,27 @@ function isDirectlyExecuted() {
 
 if (isDirectlyExecuted()) {
   // 测试SiliconFlow
-  // 输入key
   const key = getSiliconflowKey();
   const siliconflowUrl = 'https://api.siliconflow.cn/v1';
   const siliconflowProvider = new AIModelProvider(key, siliconflowUrl);
-  const conversation = new ConversationManager(siliconflowProvider, 'deepseek-ai/DeepSeek-V3.2', 'You are a helpful assistant.');
+  const conversation = new ConversationManager(siliconflowProvider, 'deepseek-ai/DeepSeek-V3', '你是一个乐于助人的助手。');
+
+  console.log('--- 开始非流式测试 ---');
   const response = await conversation.sendMessage('你好');
-  console.log(response);
-    
+  console.log('回答:', response);
+
+  console.log('\n--- 开始流式测试 ---');
+  const stream = conversation.sendMessageStreaming('请写一首关于编程的短诗。');
+  
+  console.log('AI 开始回答:');
+  for await (const chunk of stream) {
+    console.log(chunk); // 将 process.stdout.write 改为 console.log
+  }
+
+  // 输出所有回答内容
+  console.log('\n--- 输出完整回答 ---');
+  const fullResponse = conversation.getHistory()[conversation.getHistory().length - 1].content;
+  console.log(fullResponse);
+  console.log('\n测试完成。\n');
+
 }

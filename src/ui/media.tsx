@@ -211,7 +211,7 @@ export const AudioRecorderComponent = () => {
         try {
           const vadInstance = await MicVAD.new({
             preSpeechPadMs: 500, 
-            positiveSpeechThreshold: 0.7, 
+            positiveSpeechThreshold: 0.9, 
             minSpeechMs: 300, 
             onSpeechStart: () => {
               // 三重保险拦截

@@ -370,7 +370,7 @@ export function AppShortcut() {
               onCheckedChange={setAutoRecord}
               className="data-[state=checked]:bg-green-500"
             />
-            <Label htmlFor="auto-record" className="font-bold">正面模式</Label>
+            <Label htmlFor="auto-record" className="font-bold">背对/正对模式</Label>
           </div>
           <div className="flex items-center space-x-2">
             <Switch 

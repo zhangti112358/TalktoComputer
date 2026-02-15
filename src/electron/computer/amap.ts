@@ -5,7 +5,7 @@
 import * as fs from 'fs';
 import * as url from 'url';
 
-function amapKey(){
+export function amapKey(){
   // data\tmp\key.json
   const data = fs.readFileSync('data/tmp/key.json', 'utf8');
   const json = JSON.parse(data);

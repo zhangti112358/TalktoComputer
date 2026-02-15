@@ -42,6 +42,12 @@ export class MemoryManager {
     this.memories.push(memory);
   }
 
+  // 预留：将来用于根据语义检索相关的历史
+  findRelatedMemories(query: string, limit: number): MemoryStrand[] {
+    // 暂时先返回最近的，以后再写向量搜索
+    return this.getMemory(limit);
+  }
+
   getMemory(num: number = -1): MemoryStrand[] {
     let memories:MemoryStrand[] = [];
     if (num == -1) {

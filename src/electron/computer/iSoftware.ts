@@ -3,8 +3,11 @@
 */
 import * as math from 'mathjs';
 import * as url from 'url';
+import OpenAI from 'openai';
+
 import { Amap, amapKey } from './amap.js';
 import { MemoryManager, MemoryType } from './memory.js';
+import { getSiliconflowKey } from './defineElectron.js';
 
 /*********************************************************************************************************************/
 // 基础抽象类
@@ -75,8 +78,10 @@ export class IFunction {
             parameters: {
                 type: "object",
                 properties: this.param.reduce((acc: any, p) => {
+                    // 确保类型映射到 JSON Schema 标准 (bool -> boolean)
+                    const typeMap: any = { 'string': 'string', 'number': 'number', 'bool': 'boolean' };
                     acc[p.name] = { 
-                        type: p.type, 
+                        type: typeMap[p.type] || 'string', 
                         description: p.information.content 
                     };
                     return acc;
@@ -108,7 +113,7 @@ export abstract class IVariable {
 
 // 类
 export abstract class IClass {
-    public name: string;
+    public name: string; // 例如 "AmapApp"
     public information: Information;
     public functions: Map<string, IFunction> = new Map();
     public variables: Map<string, IVariable> = new Map();
@@ -122,7 +127,10 @@ export abstract class IClass {
     public getFunctionsSchema(): any[] {
         const schemas: any[] = [];
         this.functions.forEach((func) => {
-            schemas.push(func.toJSONSchema());
+            const schema = func.toJSONSchema();
+            // 核心修改：将函数名改为 "App名__函数名"
+            schema.name = `${this.name}__${func.name}`;
+            schemas.push(schema);
         });
         return schemas;
     }
@@ -335,13 +343,29 @@ export class AmapApp extends IClass {
  * 负责：App 注册、记忆管理、上下文组装、LLM 任务循环
  */
 export class System {
+    private client: OpenAI;
+    private model: string;
     private memory: MemoryManager;
     private apps: Map<string, IClass> = new Map();
     private similarity: SentenceSimilarity;
+    public debug: boolean = false; // 控制日志输出的开关
 
-    constructor(embeddingFn: EmbeddingFunction) {
+    constructor(apiKey: string, baseURL: string = 'https://api.siliconflow.cn/v1', model: string = 'deepseek-ai/DeepSeek-V3', debug: boolean = false) {
+        this.client = new OpenAI({
+            apiKey: apiKey,
+            baseURL: baseURL,
+            dangerouslyAllowBrowser: true // 适配 Electron 进程
+        });
+        this.model = model;
+        this.debug = debug;
         this.memory = new MemoryManager();
-        this.similarity = new SentenceSimilarity(embeddingFn);
+        this.similarity = new SentenceSimilarity((text) => [0]); // 暂时的占位
+    }
+
+    private log(module: string, message: any) {
+        if (!this.debug) return;
+        const msg = typeof message === 'object' ? JSON.stringify(message, null, 2) : message;
+        console.log(`[${module}] ${new Date().toLocaleTimeString()}: ${msg}`);
     }
 
     /**
@@ -359,49 +383,41 @@ export class System {
      * 用户输入一句话，系统进行 思考 -> 行动 -> 观察 的循环
      */
     public async talk(userInput: string): Promise<string> {
-        // 第一步：存入用户记忆
-        this.memory.addSpokenWords(userInput);
-
-        let finalResponse = "";
+        this.log("TALK", `User: ${userInput}`);
+        
+        // 核心：维护本轮对话的临时工具链状态
+        let roundMessages: any[] = []; 
         let isFinished = false;
+        let finalText = "";
 
-        // 维护一个局部变量来存放当前轮次的工具调用结果，用于喂给模型
-        let toolOutputs: any[] = [];
-
-        // 进入 Agent 决策循环
         while (!isFinished) {
-            // STEP 2: 准备上下文 (组装 Prompt)
-            const promptContext = this.prepareContext(userInput, toolOutputs);
+            // 准备上下文（包含：系统提示、长期记忆、以及本轮已产生的 roundMessages）
+            const context = this.prepareContext(userInput, roundMessages);
+            const result = await this.callLLM(context);
 
-            // STEP 3: 调用模型 (LLM)
-            // TODO: 调用真正的 LLM API (如 DeepSeek)
-            console.log("System: 正在思考并提取意图...");
-            const llmResult = await this.callLLM(promptContext); 
-
-            // STEP 4: 判断模型意图
-            if (llmResult.type === 'text') {
-                // 模型直接回复文字
-                finalResponse = llmResult.content;
-                this.memory.add(MemoryType.responseText, finalResponse);
+            if (result.type === 'text') {
+                finalText = result.content;
+                this.memory.add(MemoryType.responseText, finalText);
                 isFinished = true;
-            } 
-            else if (llmResult.type === 'tool_calls') {
-                // 模型想要调用工具
-                console.log(`System: 发现工具调用指令 - ${llmResult.calls.length} 个动作`);
-                
-                // STEP 5: 执行工具分发
-                toolOutputs = await this.dispatchTools(llmResult.calls);
-                
-                // 记录计算机操作记忆
-                toolOutputs.forEach(out => {
-                    this.memory.addComputerAction(`执行了 ${out.funcName}, 结果: ${JSON.stringify(out.data)}`);
-                });
+            } else if (result.type === 'tool_calls') {
+                // 1. 记录模型发出的 tool_calls 原型（必须传回，否则报错）
+                roundMessages.push(result.rawMessage); 
 
-                // 继续循环，将 toolOutputs 传给下一次 prepareContext，让模型进行下一步总结
+                // 2. 分发并执行工具
+                const toolOutputs = await this.dispatchTools(result.calls);
+
+                // 3. 记录工具执行的结果
+                for (const output of toolOutputs) {
+                    roundMessages.push({
+                        role: 'tool',
+                        tool_call_id: output.callId,
+                        content: JSON.stringify(output.data)
+                    });
+                }
+                // 继续循环，让模型基于这些结果产生回答
             }
         }
-
-        return finalResponse;
+        return finalText;
     }
 
     /**
@@ -409,15 +425,18 @@ export class System {
      * 动态挑选相关的 App Schema、系统状态和历史记忆
      */
     private prepareContext(userInput: string, currentToolResults: any[] = []) {
-        // TODO: 1. 从 memory 获取最近 N 条记录
-        // TODO: 2. 根据 userInput 通过相似度挑出最相关的 App
-        // TODO: 3. 合并所有 App 的 getStateSnapshot()
-        
-        console.log("System: 正在拼装上下文数据...");
+        // 加强对工具使用的引导
+        const systemPrompt = `你是一个全能的计算机助手。你可以通过调用工具来执行现实世界的任务。
+如果用户的问题可以由工具解决（如查天气、搜地图），请务必调用对应的函数，不要只用文字回答。
+当前可用的应用包括：${Array.from(this.apps.keys()).join(', ')}。`;
+
         return {
-            history: this.memory.getMemory(10),
-            availableTools: Array.from(this.apps.values()).flatMap(app => app.getFunctionsSchema()),
-            toolResults: currentToolResults
+            systemPrompt: systemPrompt,
+            history: this.memory.getMemory(10), 
+            availableTools: Array.from(this.apps.values()).flatMap(app => 
+                app.getFunctionsSchema() // 记得在 getFunctionsSchema 里给函数名加 App 前缀
+            ),
+            currentToolResults: currentToolResults // id, name, data
         };
     }
 
@@ -443,17 +462,54 @@ export class System {
     }
 
     /**
-     * 5. LLM 通信层 (TODO)
+     * 5. LLM 通信层 (精简实现)
      */
     private async callLLM(context: any): Promise<any> {
-        // TODO: 对接 OpenAI / DeepSeek 的 SDK
-        // 模拟返回
-        return { type: 'text', content: "这是一个框架模拟回复。" };
+        // 修改：确保这里的 messages 构造逻辑与 talk 中的 roundMessages 一致
+        const messages: any[] = [
+            { role: 'system', content: context.systemPrompt },
+            ...context.history.map((m: any) => ({
+                role: m.type === 'spokenWords' ? 'user' : 'assistant',
+                content: m.content
+            })),
+            ...context.currentToolResults // 这是 talk 传进来的 roundMessages
+        ];
+
+        const response = await this.client.chat.completions.create({
+            model: this.model,
+            messages: messages,
+            tools: context.availableTools.map((t: any) => ({ type: 'function', function: t }))
+        });
+
+        const msg = response.choices[0].message;
+
+        if (msg.tool_calls) {
+            return {
+                type: 'tool_calls',
+                rawMessage: msg,
+                calls: msg.tool_calls.map((c: any) => {
+                    // 修复 ts(2339) 错误：增加类型判断
+                    if (c.type === 'function') {
+                        // 解析 AppName__FunctionName 结构
+                        const fullMethodName = c.function.name;
+                        const [appName, functionName] = fullMethodName.includes('__') 
+                            ? fullMethodName.split('__') 
+                            : [null, fullMethodName];
+
+                        return {
+                            id: c.id,
+                            appName: appName,
+                            functionName: functionName,
+                            args: JSON.parse(c.function.arguments)
+                        };
+                    }
+                    return null;
+                }).filter((c: any) => c !== null)
+            };
+        }
+        return { type: 'text', content: msg.content };
     }
 }
-
-/*********************************************************************************************************************/
-// ...existing code...
 
 
 /*********************************************************************************************************************/
@@ -472,7 +528,39 @@ export class IClassTest {
     }
 }
 
+export class SystemTest {
+    public async test() {
+        // 1. 配置参数 (请替换为您自己的有效 Key)
+        const MY_API_KEY = getSiliconflowKey();
+        const BASE_URL = "https://api.siliconflow.cn/v1";
+        const MODEL = "deepseek-ai/DeepSeek-V3";
 
+        console.log("=== [TEST] 正在初始化系统 ===");
+        
+        // 2. 初始化 System (开启 DEBUG 模式)
+        // 构造函数参数顺序: apiKey, baseURL, model, debug
+        const mySystem = new System(MY_API_KEY, BASE_URL, MODEL, true);
+
+        // 3. 注册 App
+        const amap = new AmapApp(amapKey());
+        mySystem.registerApp(amap);
+        console.log(`=== [TEST] 已注册应用: ${amap.name} ===`);
+
+        try {
+            console.log("\n--- [场景1: 基础对话测试] ---");
+            const res1 = await mySystem.talk("你好，请记住我是一个开发者。");
+            console.log(">>> 最终回复1:", res1);
+
+            console.log("\n--- [场景2: 工具调用测试] ---");
+            // 这里会触发 AppName__FunctionName 逻辑
+            const res2 = await mySystem.talk("帮我查一下上海的天气怎么样？");
+            console.log(">>> 最终回复2:", res2);
+
+        } catch (error) {
+            console.error("测试过程中发生错误:", error);
+        }
+    }
+}
 
 // 安全地检查是否是直接运行此脚本
 function isDirectlyExecuted() {
@@ -485,6 +573,10 @@ function isDirectlyExecuted() {
 }
 
 if (isDirectlyExecuted()) {
-  const test = new IClassTest();
-  test.test();
+//   const test = new IClassTest();
+//   test.test();
+
+  // system 测试
+    const systemTest = new SystemTest();
+    systemTest.test();
 }

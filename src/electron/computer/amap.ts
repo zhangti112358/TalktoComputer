@@ -838,12 +838,12 @@ class AmapTest {
     // const transitResult = await amap.directionTransitIntegrated('116.481028,39.989643', '116.434446,39.90816', '010', '010');
     // console.log(transitResult);
 
-    // 测试关键字搜索
-    const placeResult = await amap.searchPlaceText('北京大学', '', { region: '北京市', city_limit: true, page_size: 5 });
-    console.log(placeResult);
-    // 测试周边搜索
-    const aroundResult = await amap.searchPlaceAround('116.481028,39.989643', '餐饮', '', { radius: 1000, sortrule: 'distance', page_size: 5 });
-    console.log(aroundResult);
+    // // 测试关键字搜索
+    // const placeResult = await amap.searchPlaceText('北京大学', '', { region: '北京市', city_limit: true, page_size: 5 });
+    // console.log(placeResult);
+    // // 测试周边搜索
+    // const aroundResult = await amap.searchPlaceAround('116.481028,39.989643', '餐饮', '', { radius: 1000, sortrule: 'distance', page_size: 5 });
+    // console.log(aroundResult);
 
     // 测试天气查询
     // const weatherResult = await amap.weather('110101'); // 北京市东城区的adcode

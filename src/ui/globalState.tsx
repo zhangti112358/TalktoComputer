@@ -50,7 +50,7 @@ export const GlobalStateContext = createContext<GlobalStateType | undefined>(und
 export const GlobalStateProvider = ({ children }: {children:ReactNode}) => {
   // 音频录制状态
   const [recording, setRecording] = useState(false);
-  const [autoRecord, setAutoRecord] = useState(true);
+  const [autoRecord, setAutoRecord] = useState(false);
   const hasInitializedRecoder = useRef(false);
 
   // 主界面状态

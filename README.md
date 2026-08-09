@@ -1,3 +1,5 @@
+
+
 让计算机听懂人话！
 
 # 使用示例
@@ -11,7 +13,7 @@ npm install
 
 npm run dev    # mac
 
-npm run devwin # windows 区别是运行前执行“chcp 65001”改为utf-8编码
+npm run devwin # Windows: 自动执行 chcp 65001 解决中文乱码
 
 # 人机交互可以更加自然且高效
 
